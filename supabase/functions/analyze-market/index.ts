@@ -1,0 +1,157 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface MarketAnalysisRequest {
+  symbol: string;
+  price: number;
+  change24h: number;
+  changePercent24h: number;
+  volume24h: number;
+  high24h: number;
+  low24h: number;
+}
+
+const modelMapping: Record<string, string> = {
+  gemini: "google/gemini-2.5-pro",
+  gpt: "openai/gpt-5",
+  claude: "google/gemini-2.5-flash",
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const marketData = await req.json() as MarketAnalysisRequest;
+    
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
+    const systemPrompt = `You are an expert trading analyst with deep knowledge of technical analysis, market microstructure, and risk management. You analyze market data to provide actionable trading insights.
+
+Based on the provided market data, return a JSON response with the following structure:
+{
+  "signal": "BUY" | "SELL" | "HOLD",
+  "probability": number (0-100, your confidence in the signal),
+  "takeProfit": string (e.g., "+2.5%" or specific price level),
+  "stopLoss": string (e.g., "-1.2%" or specific price level),
+  "riskReward": string (e.g., "1:2.1"),
+  "detectedAsset": string (the trading pair),
+  "timeframe": string (suggested timeframe for this trade, e.g., "4H", "Daily"),
+  "chartAnalysis": string (2-3 sentences about the technical setup based on price action and volume),
+  "marketSentiment": string (1-2 sentences about current market momentum),
+  "bullishReasons": string[] (3-4 reasons why this trade could succeed),
+  "bearishReasons": string[] (2-3 risk factors or reasons it might fail)
+}
+
+Guidelines:
+- Analyze the 24h price change, volume, and price range to determine market momentum
+- Consider volatility (difference between high and low relative to price)
+- Look at the change percentage to gauge short-term trend strength
+- Volume is a key indicator of conviction behind price moves
+- Be specific about price levels for TP/SL based on the current price and range
+- Return ONLY valid JSON, no markdown or extra text`;
+
+    const userPrompt = `Analyze this market data and provide your trading recommendation:
+
+Asset: ${marketData.symbol}
+Current Price: $${marketData.price.toLocaleString()}
+24h Change: ${marketData.changePercent24h >= 0 ? '+' : ''}${marketData.changePercent24h.toFixed(2)}% ($${marketData.change24h.toFixed(2)})
+24h High: $${marketData.high24h.toLocaleString()}
+24h Low: $${marketData.low24h.toLocaleString()}
+24h Volume: $${marketData.volume24h.toLocaleString()}
+
+Provide your analysis in JSON format.`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash", // Using fast model for quick market analysis
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 2000,
+        temperature: 0.3,
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const errorText = await response.text();
+      console.error("AI Gateway error:", response.status, errorText);
+      throw new Error(`AI analysis failed: ${response.status}`);
+    }
+
+    const aiResponse = await response.json();
+    const content = aiResponse.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error("No response from AI");
+    }
+
+    // Parse the JSON response
+    let analysis;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("No JSON found in response");
+      }
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", content);
+      analysis = {
+        signal: "HOLD",
+        probability: 50,
+        takeProfit: "N/A",
+        stopLoss: "N/A",
+        riskReward: "N/A",
+        detectedAsset: marketData.symbol,
+        timeframe: "4H",
+        chartAnalysis: "Unable to fully analyze the market data. Please try again.",
+        marketSentiment: "Analysis inconclusive.",
+        bullishReasons: ["Market data needs further analysis"],
+        bearishReasons: ["Insufficient data for confident assessment"],
+      };
+    }
+
+    // Ensure detected asset matches
+    analysis.detectedAsset = marketData.symbol;
+    analysis.aiModel = "AI Quick Analysis";
+    analysis.modelsUsed = ["Google Gemini Flash"];
+
+    return new Response(
+      JSON.stringify(analysis),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error in analyze-market:", error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
