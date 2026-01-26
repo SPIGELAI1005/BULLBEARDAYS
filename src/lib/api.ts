@@ -58,6 +58,23 @@ export async function fetchMarketData(): Promise<MarketDataItem[]> {
   return data.data as MarketDataItem[];
 }
 
+export async function analyzeMarketData(marketData: MarketDataItem): Promise<AnalysisResult> {
+  const { data, error } = await supabase.functions.invoke('analyze-market', {
+    body: marketData,
+  });
+
+  if (error) {
+    console.error("Market analysis error:", error);
+    throw new Error(error.message || "Failed to analyze market data");
+  }
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  return data as AnalysisResult;
+}
+
 export interface AnalysisRecord {
   id: string;
   created_at: string;

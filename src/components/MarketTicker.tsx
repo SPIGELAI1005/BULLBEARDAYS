@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Activity, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, RefreshCw, Zap } from "lucide-react";
 import { fetchMarketData, MarketDataItem } from "@/lib/api";
 
-const MarketTicker = () => {
+interface MarketTickerProps {
+  onSelectAsset?: (asset: MarketDataItem) => void;
+}
+
+const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
   const [marketData, setMarketData] = useState<MarketDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
 
   const loadMarketData = async () => {
     try {
@@ -44,12 +49,22 @@ const MarketTicker = () => {
     return volume.toString();
   };
 
+  const handleAssetClick = (item: MarketDataItem) => {
+    setSelectedSymbol(item.symbol);
+    onSelectAsset?.(item);
+  };
+
   return (
     <div className="glass-panel-subtle p-4 mb-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-foreground">Live Markets</span>
+          {onSelectAsset && (
+            <span className="text-xs text-muted-foreground ml-2">
+              Click for instant analysis
+            </span>
+          )}
         </div>
         <button
           onClick={loadMarketData}
@@ -72,13 +87,24 @@ const MarketTicker = () => {
         ) : (
           marketData.map((item) => {
             const isPositive = item.changePercent24h >= 0;
+            const isSelected = selectedSymbol === item.symbol;
             return (
-              <div
+              <button
                 key={item.symbol}
-                className="p-3 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors"
+                onClick={() => handleAssetClick(item)}
+                className={`p-3 rounded-xl border transition-all text-left group ${
+                  isSelected
+                    ? "bg-primary/10 border-primary/50 ring-2 ring-primary/30"
+                    : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
+                }`}
               >
-                <div className="text-xs text-muted-foreground mb-1 font-medium">
-                  {item.symbol}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {item.symbol}
+                  </span>
+                  <Zap className={`w-3 h-3 transition-opacity ${
+                    isSelected ? "text-primary opacity-100" : "text-primary opacity-0 group-hover:opacity-100"
+                  }`} />
                 </div>
                 <div className="font-semibold text-foreground mb-1">
                   ${formatPrice(item.price, item.symbol)}
@@ -94,7 +120,7 @@ const MarketTicker = () => {
                 <div className="text-xs text-muted-foreground mt-1">
                   Vol: ${formatVolume(item.volume24h)}
                 </div>
-              </div>
+              </button>
             );
           })
         )}

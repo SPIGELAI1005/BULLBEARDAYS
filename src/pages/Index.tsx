@@ -24,7 +24,7 @@ import Leaderboard from "@/components/Leaderboard";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
 import CandlestickBackground from "@/components/CandlestickBackground";
-import { analyzeChart, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord } from "@/lib/api";
+import { analyzeChart, analyzeMarketData, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord, MarketDataItem } from "@/lib/api";
 import { uploadChartImage } from "@/lib/chartStorage";
 import { Layers, Grid2X2, MessageSquare } from "lucide-react";
 
@@ -292,6 +292,62 @@ const Index = () => {
     setSelectedRecord(null);
   };
 
+  // Handle clicking on a market asset for instant analysis
+  const handleMarketAssetClick = useCallback(async (asset: MarketDataItem) => {
+    setIsAnalyzing(true);
+    setAnalysis(null);
+
+    toast({
+      title: `Analyzing ${asset.symbol}...`,
+      description: "Getting AI trading recommendation",
+    });
+
+    try {
+      const result = await analyzeMarketData(asset);
+      
+      const analysisData: AnalysisData = {
+        signal: result.signal,
+        probability: result.probability,
+        takeProfit: result.takeProfit,
+        stopLoss: result.stopLoss,
+        riskReward: result.riskReward,
+        reasoning: {
+          bullish: result.bullishReasons || [],
+          bearish: result.bearishReasons || [],
+        },
+        chartAnalysis: result.chartAnalysis,
+        marketSentiment: result.marketSentiment,
+        aiModel: result.aiModel,
+      };
+
+      setAnalysis(analysisData);
+
+      toast({
+        title: `${asset.symbol} Analysis Complete`,
+        description: `${result.signal} signal with ${result.probability}% confidence`,
+      });
+
+      // Optionally save to history if user is logged in
+      if (user) {
+        try {
+          await saveAnalysis(result, undefined, `Market analysis for ${asset.symbol}`, user.id);
+          await loadAllAnalyses();
+        } catch (saveError) {
+          console.error("Failed to save market analysis:", saveError);
+        }
+      }
+    } catch (error) {
+      console.error("Market analysis failed:", error);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze market",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [user, toast]);
+
   const canAnalyze = isMultiChartMode 
     ? uploadedImages.length > 0 && selectedModels.length > 0
     : uploadedImage && selectedModels.length > 0;
@@ -326,7 +382,7 @@ const Index = () => {
       />
 
       <main id="analyze" className="max-w-7xl mx-auto px-6 pb-20">
-        <MarketTicker />
+        <MarketTicker onSelectAsset={handleMarketAssetClick} />
 
         {/* Main Chat Section - Full Width */}
         {isChatMode && (
