@@ -191,7 +191,7 @@ Provide your analysis in JSON format.`;
   } catch (error) {
     console.error("Error in analyze-market:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed" }),
+      JSON.stringify({ error: "An error occurred during market analysis. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
