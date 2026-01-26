@@ -14,6 +14,7 @@ interface MarketData {
   volume24h: number;
   high24h: number;
   low24h: number;
+  category: 'crypto' | 'forex' | 'indices' | 'stocks';
 }
 
 // Popular trading pairs to show
@@ -119,6 +120,7 @@ serve(async (req) => {
                 volume24h: coin.total_volume || 0,
                 high24h: coin.high_24h || 0,
                 low24h: coin.low_24h || 0,
+                category: 'crypto',
               });
             }
           }
@@ -135,11 +137,14 @@ serve(async (req) => {
     }
 
     // If CoinGecko failed, add simulated crypto data as fallback
-    if (marketData.length === 0) {
+    if (marketData.filter(m => m.category === 'crypto').length === 0) {
       const cryptoFallback = [
         { symbol: 'BTC/USD', basePrice: 95000, volatility: 0.02 },
         { symbol: 'ETH/USD', basePrice: 3200, volatility: 0.025 },
         { symbol: 'SOL/USD', basePrice: 180, volatility: 0.03 },
+        { symbol: 'XRP/USD', basePrice: 2.15, volatility: 0.035 },
+        { symbol: 'ADA/USD', basePrice: 0.95, volatility: 0.04 },
+        { symbol: 'DOGE/USD', basePrice: 0.32, volatility: 0.05 },
       ];
 
       for (const crypto of cryptoFallback) {
@@ -153,6 +158,7 @@ serve(async (req) => {
           volume24h: Math.floor(Math.random() * 50000000000) + 10000000000,
           high24h: crypto.basePrice * (1 + crypto.volatility / 2),
           low24h: crypto.basePrice * (1 - crypto.volatility / 2),
+          category: 'crypto',
         });
       }
     }
@@ -162,6 +168,9 @@ serve(async (req) => {
       { symbol: 'EUR/USD', basePrice: 1.0850 },
       { symbol: 'GBP/USD', basePrice: 1.2650 },
       { symbol: 'USD/JPY', basePrice: 148.50 },
+      { symbol: 'AUD/USD', basePrice: 0.6520 },
+      { symbol: 'USD/CAD', basePrice: 1.3680 },
+      { symbol: 'USD/CHF', basePrice: 0.8850 },
     ];
 
     for (const pair of forexPairs) {
@@ -175,6 +184,57 @@ serve(async (req) => {
         volume24h: Math.floor(Math.random() * 1000000000) + 500000000,
         high24h: pair.basePrice * 1.005,
         low24h: pair.basePrice * 0.995,
+        category: 'forex',
+      });
+    }
+
+    // Add simulated indices data
+    const indices = [
+      { symbol: 'SPX500', basePrice: 5950, volatility: 0.012 },
+      { symbol: 'NAS100', basePrice: 21200, volatility: 0.015 },
+      { symbol: 'DJI30', basePrice: 43500, volatility: 0.01 },
+      { symbol: 'DAX40', basePrice: 21800, volatility: 0.013 },
+      { symbol: 'FTSE100', basePrice: 8450, volatility: 0.011 },
+      { symbol: 'NIK225', basePrice: 39800, volatility: 0.014 },
+    ];
+
+    for (const index of indices) {
+      const variance = (Math.random() - 0.5) * index.volatility;
+      const change = index.basePrice * variance;
+      marketData.push({
+        symbol: index.symbol,
+        price: index.basePrice + change,
+        change24h: change,
+        changePercent24h: variance * 100,
+        volume24h: Math.floor(Math.random() * 5000000000) + 1000000000,
+        high24h: index.basePrice * (1 + index.volatility / 2),
+        low24h: index.basePrice * (1 - index.volatility / 2),
+        category: 'indices',
+      });
+    }
+
+    // Add simulated stocks data
+    const stocks = [
+      { symbol: 'AAPL', basePrice: 242, volatility: 0.02 },
+      { symbol: 'MSFT', basePrice: 448, volatility: 0.018 },
+      { symbol: 'GOOGL', basePrice: 198, volatility: 0.022 },
+      { symbol: 'AMZN', basePrice: 225, volatility: 0.025 },
+      { symbol: 'NVDA', basePrice: 138, volatility: 0.035 },
+      { symbol: 'TSLA', basePrice: 425, volatility: 0.04 },
+    ];
+
+    for (const stock of stocks) {
+      const variance = (Math.random() - 0.5) * stock.volatility;
+      const change = stock.basePrice * variance;
+      marketData.push({
+        symbol: stock.symbol,
+        price: stock.basePrice + change,
+        change24h: change,
+        changePercent24h: variance * 100,
+        volume24h: Math.floor(Math.random() * 100000000) + 50000000,
+        high24h: stock.basePrice * (1 + stock.volatility / 2),
+        low24h: stock.basePrice * (1 - stock.volatility / 2),
+        category: 'stocks',
       });
     }
 

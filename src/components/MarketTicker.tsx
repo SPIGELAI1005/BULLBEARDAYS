@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Activity, RefreshCw, Zap } from "lucide-react";
-import { fetchMarketData, MarketDataItem } from "@/lib/api";
+import { TrendingUp, TrendingDown, Activity, RefreshCw, Zap, Bitcoin, DollarSign, BarChart3, Building2 } from "lucide-react";
+import { fetchMarketData, MarketDataItem, MarketCategory } from "@/lib/api";
 
 interface MarketTickerProps {
   onSelectAsset?: (asset: MarketDataItem) => void;
 }
+
+const CATEGORIES: { id: MarketCategory; label: string; icon: React.ReactNode }[] = [
+  { id: 'crypto', label: 'Crypto', icon: <Bitcoin className="w-4 h-4" /> },
+  { id: 'forex', label: 'Forex', icon: <DollarSign className="w-4 h-4" /> },
+  { id: 'indices', label: 'Indices', icon: <BarChart3 className="w-4 h-4" /> },
+  { id: 'stocks', label: 'Stocks', icon: <Building2 className="w-4 h-4" /> },
+];
 
 const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
   const [marketData, setMarketData] = useState<MarketDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<MarketCategory>('crypto');
 
   const loadMarketData = async () => {
     try {
@@ -39,7 +47,10 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
     if (price >= 1000) {
       return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
     }
-    return price.toFixed(4);
+    if (price < 1) {
+      return price.toFixed(4);
+    }
+    return price.toFixed(2);
   };
 
   const formatVolume = (volume: number) => {
@@ -53,6 +64,8 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
     setSelectedSymbol(item.symbol);
     onSelectAsset?.(item);
   };
+
+  const filteredData = marketData.filter(item => item.category === activeCategory);
 
   return (
     <div className="glass-panel-subtle p-4 mb-6">
@@ -75,8 +88,26 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
         </button>
       </div>
 
+      {/* Category Tabs */}
+      <div className="flex items-center gap-1 p-1 mb-4 rounded-xl bg-muted/30 border border-border/30">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+              activeCategory === cat.id
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            }`}
+          >
+            {cat.icon}
+            <span className="hidden sm:inline">{cat.label}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {isLoading && marketData.length === 0 ? (
+        {isLoading && filteredData.length === 0 ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="p-3 rounded-xl bg-muted/30 animate-pulse">
               <div className="h-4 bg-muted rounded w-16 mb-2" />
@@ -85,9 +116,10 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
             </div>
           ))
         ) : (
-          marketData.map((item) => {
+          filteredData.map((item) => {
             const isPositive = item.changePercent24h >= 0;
             const isSelected = selectedSymbol === item.symbol;
+            const showDollarSign = activeCategory !== 'forex';
             return (
               <button
                 key={item.symbol}
@@ -107,7 +139,7 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
                   }`} />
                 </div>
                 <div className="font-semibold text-foreground mb-1">
-                  ${formatPrice(item.price, item.symbol)}
+                  {showDollarSign ? '$' : ''}{formatPrice(item.price, item.symbol)}
                 </div>
                 <div className={`flex items-center gap-1 text-xs ${isPositive ? 'text-bullish' : 'text-bearish'}`}>
                   {isPositive ? (
