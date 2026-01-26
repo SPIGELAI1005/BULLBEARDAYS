@@ -81,20 +81,20 @@ const ChatInput = ({ onSubmit, isLoading = false, placeholder = "Describe your t
   const canSubmit = (message.trim() || images.length > 0) && !isLoading;
 
   return (
-    <div className="glass-panel p-4 space-y-3">
+    <div className="space-y-4">
       {/* Image previews */}
       {images.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {images.map((img, index) => (
             <div key={index} className="relative group">
               <img
                 src={img}
                 alt={`Uploaded ${index + 1}`}
-                className="h-20 w-auto rounded-lg object-cover border border-border/50"
+                className="h-24 w-auto rounded-xl object-cover border border-border/50 shadow-lg"
               />
               <button
                 onClick={() => handleRemoveImage(index)}
-                className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                className="absolute -top-2 -right-2 p-1.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -103,8 +103,8 @@ const ChatInput = ({ onSubmit, isLoading = false, placeholder = "Describe your t
         </div>
       )}
 
-      {/* Input area */}
-      <div className="flex items-end gap-3">
+      {/* Input area - bigger textarea */}
+      <div className="flex items-end gap-4">
         <div className="flex-1 relative">
           <Textarea
             ref={textareaRef}
@@ -115,20 +115,20 @@ const ChatInput = ({ onSubmit, isLoading = false, placeholder = "Describe your t
             placeholder={placeholder}
             disabled={isLoading}
             className={cn(
-              "min-h-[60px] max-h-[200px] resize-none pr-12",
+              "min-h-[120px] max-h-[300px] resize-none pr-14 text-base",
               "bg-background/50 border-border/50 focus:border-primary/50",
-              "placeholder:text-muted-foreground/60"
+              "placeholder:text-muted-foreground/60 rounded-xl"
             )}
-            rows={2}
+            rows={4}
           />
           
           {/* Image upload button inside textarea */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="absolute right-3 bottom-3 p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 bottom-3 p-2.5 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
             title="Add image"
           >
-            <ImagePlus className="w-5 h-5" />
+            <ImagePlus className="w-6 h-6" />
           </button>
           
           <input
@@ -145,24 +145,25 @@ const ChatInput = ({ onSubmit, isLoading = false, placeholder = "Describe your t
         <Button
           onClick={handleSubmit}
           disabled={!canSubmit}
+          size="lg"
           className={cn(
-            "h-12 px-4 rounded-xl transition-all",
+            "h-14 px-6 rounded-xl transition-all",
             canSubmit 
               ? "bg-gradient-to-r from-bullish to-accent hover:opacity-90" 
               : "bg-muted text-muted-foreground"
           )}
         >
           {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
-            <Send className="w-5 h-5" />
+            <Send className="w-6 h-6" />
           )}
         </Button>
       </div>
 
       {/* Helper text */}
-      <p className="text-xs text-muted-foreground text-center">
-        Paste chart images directly (Ctrl+V) or click <ImagePlus className="w-3 h-3 inline" /> to upload • Press Enter to analyze
+      <p className="text-sm text-muted-foreground text-center">
+        Paste chart images directly (Ctrl+V) or click <ImagePlus className="w-4 h-4 inline" /> to upload • Press Enter to analyze
       </p>
     </div>
   );

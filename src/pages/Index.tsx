@@ -23,6 +23,7 @@ import OfflineIndicator from "@/components/OfflineIndicator";
 import Leaderboard from "@/components/Leaderboard";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
+import CandlestickBackground from "@/components/CandlestickBackground";
 import { analyzeChart, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord } from "@/lib/api";
 import { uploadChartImage } from "@/lib/chartStorage";
 import { Layers, Grid2X2, MessageSquare } from "lucide-react";
@@ -296,9 +297,13 @@ const Index = () => {
     : uploadedImage && selectedModels.length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <Hero />
+    <div className="min-h-screen bg-background relative">
+      {/* Animated candlestick chart background */}
+      <CandlestickBackground />
+      
+      <div className="relative z-10">
+        <Header />
+        <Hero />
       
       {/* Hidden file input for keyboard shortcut */}
       <input
@@ -323,8 +328,25 @@ const Index = () => {
       <main id="analyze" className="max-w-7xl mx-auto px-6 pb-20">
         <MarketTicker />
 
+        {/* Main Chat Section - Full Width */}
+        {isChatMode && (
+          <div className="mb-8">
+            <div className="glass-panel p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">AI Chart Analysis</h2>
+              </div>
+              <ChatInput
+                onSubmit={handleChatSubmit}
+                isLoading={isAnalyzing}
+                placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
+              />
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          {/* Left Column - Upload & Models */}
+          {/* Left Column - Upload & Models (when not in chat mode) */}
           <div className="space-y-6">
             {/* Mode Toggle - Chat / Single / Multi */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/30 border border-border/30">
@@ -363,31 +385,24 @@ const Index = () => {
               </button>
             </div>
 
-            {/* Chat Mode - Text + Paste Images */}
-            {isChatMode ? (
-              <ChatInput
-                onSubmit={handleChatSubmit}
-                isLoading={isAnalyzing}
-                placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
-              />
-            ) : isMultiChartMode ? (
-              <MultiChartUpload
-                onImagesUpload={handleMultiImagesUpload}
-                uploadedImages={uploadedImages}
-                onClearAll={handleClearAllImages}
-                onClearOne={handleClearOneImage}
-              />
-            ) : (
-              <ChartUpload
-                onImageUpload={handleImageUpload}
-                uploadedImage={uploadedImage}
-                onClear={handleClearImage}
-              />
-            )}
-            
-            {/* Only show AI selector and analyze button in non-chat modes */}
+            {/* Non-chat upload modes */}
             {!isChatMode && (
               <>
+                {isMultiChartMode ? (
+                  <MultiChartUpload
+                    onImagesUpload={handleMultiImagesUpload}
+                    uploadedImages={uploadedImages}
+                    onClearAll={handleClearAllImages}
+                    onClearOne={handleClearOneImage}
+                  />
+                ) : (
+                  <ChartUpload
+                    onImageUpload={handleImageUpload}
+                    uploadedImage={uploadedImage}
+                    onClear={handleClearImage}
+                  />
+                )}
+                
                 <div className="ai-model-selector">
                   <AIModelSelector
                     selectedModels={selectedModels}
@@ -407,13 +422,14 @@ const Index = () => {
               </>
             )}
 
-            {/* Watchlist */}
-            <WatchlistPanel />
+            {/* Analysis Results */}
+            <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
           </div>
 
-          {/* Middle Column - Results */}
+          {/* Middle Column - Watchlist & Price Alerts (side by side in a 2-row layout) */}
           <div className="space-y-6">
-            <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+            {/* Watchlist */}
+            <WatchlistPanel />
             
             {/* Price Alerts */}
             <PriceAlerts />
@@ -478,6 +494,7 @@ const Index = () => {
       <OnboardingTour />
       <OfflineIndicator />
       <ShortcutsHelp isOpen={showShortcutsHelp} onClose={() => setShowShortcutsHelp(false)} />
+      </div>
     </div>
   );
 };
