@@ -14,6 +14,14 @@ const CandlestickBackground = () => {
   const candlesRef = useRef<Candle[]>([]);
   const animationRef = useRef<number>();
 
+  const toHsla = (hsl: string, alpha: number) => {
+    // CSS vars are stored as: "142 71% 45%" -> canvas wants: "hsla(142, 71%, 45%, 0.5)"
+    const parts = hsl.split(/\s+/).filter(Boolean);
+    if (parts.length < 3) return `rgba(255,255,255,${alpha})`;
+    const [h, s, l] = parts;
+    return `hsla(${h}, ${s}, ${l}, ${alpha})`;
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -59,19 +67,18 @@ const CandlestickBackground = () => {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Get computed styles for theming - use direct colors for reliability
+      // Get computed styles for theming
       const styles = getComputedStyle(document.documentElement);
       const bullishHsl = styles.getPropertyValue("--bullish").trim();
       const bearishHsl = styles.getPropertyValue("--bearish").trim();
 
-      // Parse HSL values and create proper color strings
-      // CSS variables are in format "142 71% 45%" - need to convert to proper hsla
-      const bullishColor = `hsl(${bullishHsl.replace(/ /g, ', ')} / 0.5)`;
-      const bearishColor = `hsl(${bearishHsl.replace(/ /g, ', ')} / 0.5)`;
-      const wickBullish = `hsl(${bullishHsl.replace(/ /g, ', ')} / 0.4)`;
-      const wickBearish = `hsl(${bearishHsl.replace(/ /g, ', ')} / 0.4)`;
-      const glowBullish = `hsl(${bullishHsl.replace(/ /g, ', ')} / 0.7)`;
-      const glowBearish = `hsl(${bearishHsl.replace(/ /g, ', ')} / 0.7)`;
+      // Use canvas-safe hsla() strings (the modern `hsl(... / a)` syntax can render as grey)
+      const bullishColor = toHsla(bullishHsl, 0.55);
+      const bearishColor = toHsla(bearishHsl, 0.55);
+      const wickBullish = toHsla(bullishHsl, 0.45);
+      const wickBearish = toHsla(bearishHsl, 0.45);
+      const glowBullish = toHsla(bullishHsl, 0.85);
+      const glowBearish = toHsla(bearishHsl, 0.85);
 
       const candles = candlesRef.current;
 
@@ -104,7 +111,7 @@ const CandlestickBackground = () => {
 
         // Set glow effect
         ctx.shadowColor = glowColor;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 18;
 
         // Draw wick with glow
         ctx.beginPath();
@@ -141,7 +148,7 @@ const CandlestickBackground = () => {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.6 }}
+      style={{ opacity: 0.85 }}
     />
   );
 };
