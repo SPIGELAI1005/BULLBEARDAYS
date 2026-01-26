@@ -1,23 +1,16 @@
-import logo from "@/assets/logo.jpeg";
+import AnimatedLogo from "./AnimatedLogo";
 
 const Hero = () => {
   return (
-    <section className="relative pt-32 pb-16 px-6 overflow-hidden">
+    <section className="relative pt-24 pb-12 px-6 overflow-hidden">
       {/* Background Glow Effects */}
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-bullish/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-bearish/5 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="max-w-4xl mx-auto text-center relative z-10">
-        {/* Logo */}
-        <div className="mb-8 flex justify-center">
-          <div className="relative animate-float">
-            <div className="absolute inset-0 bg-gradient-to-r from-bullish via-accent to-bearish rounded-3xl blur-2xl opacity-30" />
-            <img
-              src={logo}
-              alt="BullBearDays"
-              className="relative w-32 h-32 rounded-3xl object-cover shadow-2xl"
-            />
-          </div>
+        {/* Animated Logo with Cinema Light Effect */}
+        <div className="mb-6 flex justify-center">
+          <AnimatedLogo />
         </div>
 
         {/* Tagline */}
