@@ -11,33 +11,39 @@ export interface OnboardingStep {
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    id: "disclaimer",
+    title: "Important: Educational Tool",
+    description: "BullBearDays provides scenario analysis for educational purposes only. Not financial advice. Always do your own research and consult licensed advisors before trading.",
+    target: ".disclaimer-banner",
+  },
+  {
     id: "upload",
     title: "Upload Your Chart",
-    description: "Drag and drop or click to upload a trading chart screenshot for AI analysis",
+    description: "Drag and drop or click to upload a trading chart screenshot for AI-powered scenario analysis",
     target: ".chart-upload-area",
   },
   {
     id: "models",
     title: "Select AI Models",
-    description: "Choose one or more AI models to analyze your chart. Different models may provide different perspectives",
+    description: "Choose one or more AI models to analyze your chart. Different models may provide different perspectives on bull and bear scenarios",
     target: ".ai-model-selector",
   },
   {
     id: "analyze",
-    title: "Analyze",
-    description: "Click to get AI-powered trading signals with take profit and stop loss levels",
+    title: "Generate Scenarios",
+    description: "Click to receive AI-generated bull and bear scenarios with key levels, evidence, and risk factors",
     target: ".analyze-button",
   },
   {
     id: "history",
-    title: "Track Your History",
-    description: "View past analyses and mark outcomes as wins or losses to track your performance",
+    title: "Track Your Analyses",
+    description: "View past scenario analyses and mark which scenarios played out to improve your understanding",
     target: ".history-panel",
   },
   {
     id: "performance",
-    title: "Performance Dashboard",
-    description: "See your win rate, best performing assets, and AI model accuracy over time",
+    title: "Analytics Dashboard",
+    description: "See analysis history, scenario tracking, and identify which patterns work best for your trading style",
     target: "#performance",
   },
 ];

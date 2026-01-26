@@ -27,16 +27,16 @@ const Hero = () => {
         {/* Headline */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight">
           AI-Powered{" "}
-          <span className="text-gradient-gold">Trading Decisions</span>
+          <span className="text-gradient-gold">Scenario Analysis</span>
           <br />
           in Seconds
         </h1>
 
         {/* Description */}
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
-          Upload any chart screenshot and let multiple AI models analyze technicals, 
-          market sentiment, and risk — delivering actionable trade setups with 
-          take-profit, stop-loss, and probability scores.
+          Upload any chart screenshot and let multiple AI models analyze technicals,
+          market sentiment, and risk — delivering bull and bear scenarios to help you
+          understand potential market outcomes.
         </p>
 
         {/* Stats */}

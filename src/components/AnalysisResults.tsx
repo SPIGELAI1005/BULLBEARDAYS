@@ -2,6 +2,7 @@ import { TrendingUp, TrendingDown, Target, Shield, Percent, Brain, AlertTriangle
 import PriceTargets from "./PriceTargets";
 import QuickActions from "./QuickActions";
 import TradingStrategySelector, { TradingStrategy } from "./TradingStrategySelector";
+import DisclaimerBanner from "./DisclaimerBanner";
 
 interface PriceTarget {
   price: number;
@@ -15,8 +16,10 @@ interface ConfidenceInterval {
 }
 
 interface AnalysisData {
-  signal: "BUY" | "SELL" | "HOLD";
-  probability: number;
+  signal: "BUY" | "SELL" | "HOLD"; // Legacy - will be replaced by trendBias
+  trendBias?: "BULLISH" | "BEARISH" | "NEUTRAL"; // New field
+  probability: number; // Legacy - will be replaced by confidenceScore
+  confidenceScore?: number; // New field
   takeProfit: string;
   stopLoss: string;
   riskReward: string;
@@ -75,22 +78,29 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
             <Brain className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium text-foreground mb-2">
-            Ready to Analyze
+            Ready for Scenario Analysis
           </h3>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Upload a chart screenshot and select AI models to receive trading insights
+            Upload a chart screenshot to receive bull/bear scenario analysis
           </p>
         </div>
       </div>
     );
   }
 
-  const isBullish = analysis.signal === "BUY";
-  const isBearish = analysis.signal === "SELL";
+  // Support both old (signal/probability) and new (trendBias/confidenceScore) formats
+  const displayBias = analysis.trendBias ||
+    (analysis.signal === "BUY" ? "BULLISH" :
+     analysis.signal === "SELL" ? "BEARISH" : "NEUTRAL");
+  const displayConfidence = analysis.confidenceScore || analysis.probability;
+
+  const isBullish = displayBias === "BULLISH";
+  const isBearish = displayBias === "BEARISH";
+  const isNeutral = displayBias === "NEUTRAL";
 
   return (
     <div className={`glass-trading p-6 ${isBullish ? 'signal-pulse-bullish glow-bullish' : isBearish ? 'signal-pulse-bearish glow-bearish' : ''}`}>
-      {/* Signal Header */}
+      {/* Trend Bias Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div className={`p-3 rounded-xl ${
@@ -98,23 +108,28 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
           }`}>
             {isBullish ? (
               <TrendingUp className="w-6 h-6 text-bullish" />
-            ) : (
+            ) : isBearish ? (
               <TrendingDown className="w-6 h-6 text-bearish" />
+            ) : (
+              <TrendingUp className="w-6 h-6 text-neutral" />
             )}
           </div>
           <div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+              Trend Bias
+            </div>
             <div className={`text-2xl font-bold ${
               isBullish ? 'text-gradient-bullish' : isBearish ? 'text-gradient-bearish' : 'text-gradient-gold'
             }`}>
-              {analysis.signal}
+              {displayBias}
             </div>
             <div className="text-sm text-muted-foreground">
               via {analysis.aiModel}
             </div>
           </div>
         </div>
-        
-        {/* Probability Ring */}
+
+        {/* Confidence Ring */}
         <div className="relative w-16 h-16">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
             <circle
@@ -132,12 +147,13 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
               fill="none"
               stroke={isBullish ? "hsl(var(--bullish))" : isBearish ? "hsl(var(--bearish))" : "hsl(var(--neutral))"}
               strokeWidth="2"
-              strokeDasharray={`${analysis.probability} 100`}
+              strokeDasharray={`${displayConfidence} 100`}
               strokeLinecap="round"
             />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-sm font-bold">{analysis.probability}%</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-sm font-bold">{displayConfidence}%</span>
+            <span className="text-[8px] text-muted-foreground">confidence</span>
           </div>
         </div>
       </div>
@@ -226,7 +242,7 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
           <div className="p-4 rounded-xl bg-bullish/5 border border-bullish/20">
             <h4 className="text-sm font-medium text-bullish mb-3 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
-              Why It Could Succeed
+              Bull Scenario Evidence
             </h4>
             <ul className="space-y-2">
               {analysis.reasoning.bullish.map((reason, i) => (
@@ -237,11 +253,11 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
               ))}
             </ul>
           </div>
-          
+
           <div className="p-4 rounded-xl bg-bearish/5 border border-bearish/20">
             <h4 className="text-sm font-medium text-bearish mb-3 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              Risk Factors
+              Bear Scenario Evidence
             </h4>
             <ul className="space-y-2">
               {analysis.reasoning.bearish.map((reason, i) => (
@@ -253,6 +269,11 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* Footer Disclaimer */}
+      <div className="mt-6">
+        <DisclaimerBanner variant="persistent" position="footer" compact />
       </div>
     </div>
   );

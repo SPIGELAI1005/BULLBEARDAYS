@@ -3,6 +3,7 @@ import { User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/AuthModal";
 import ThemeToggle from "@/components/ThemeToggle";
+import DisclaimerBanner from "@/components/DisclaimerBanner";
 
 const Header = () => {
   const { user, profile, isLoading, signOut } = useAuth();
@@ -16,8 +17,9 @@ const Header = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
-        <div className="glass-panel-subtle max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <div className="px-6 pt-4">
+          <div className="glass-panel-subtle max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="font-bold text-foreground text-lg">b u l l b e a r d a y s . c o m</span>
             <span className="text-[9px] tracking-[0.15em]">
@@ -98,6 +100,11 @@ const Header = () => {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Disclaimer Banner */}
+        <div className="max-w-7xl mx-auto px-6">
+          <DisclaimerBanner variant="persistent" position="header" />
         </div>
       </header>
 
