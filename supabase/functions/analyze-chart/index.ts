@@ -163,7 +163,10 @@ Guidelines:
     const aiResponse = await response.json();
     const content = aiResponse.choices?.[0]?.message?.content;
     
+    console.log("AI Response received, length:", content?.length || 0);
+    
     if (!content) {
+      console.error("No content in AI response:", JSON.stringify(aiResponse));
       throw new Error("No response from AI");
     }
 
@@ -171,10 +174,17 @@ Guidelines:
     let analysis;
     try {
       // Try to extract JSON from the response (handle potential markdown wrapping)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      // First try to find JSON in code blocks
+      const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      let jsonString = codeBlockMatch ? codeBlockMatch[1].trim() : content;
+      
+      // Then try to extract the JSON object
+      const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[0]);
+        console.log("Successfully parsed analysis, signal:", analysis.signal);
       } else {
+        console.error("No JSON object found in response:", content.substring(0, 500));
         throw new Error("No JSON found in response");
       }
     } catch (parseError) {
