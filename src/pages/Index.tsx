@@ -24,9 +24,21 @@ import Leaderboard from "@/components/Leaderboard";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
 import CandlestickBackground from "@/components/CandlestickBackground";
-import { analyzeChart, analyzeMarketData, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord, MarketDataItem } from "@/lib/api";
+import { analyzeChart, analyzeMarketData, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord, MarketDataItem, fetchMarketData } from "@/lib/api";
 import { uploadChartImage } from "@/lib/chartStorage";
-import { Layers, Grid2X2, MessageSquare } from "lucide-react";
+import MarketComparison from "@/components/MarketComparison";
+import { Layers, Grid2X2, MessageSquare, BarChart3 } from "lucide-react";
+
+interface PriceTarget {
+  price: number;
+  confidence: number;
+}
+
+interface ConfidenceInterval {
+  low: number;
+  high: number;
+  timeframe: string;
+}
 
 interface AnalysisData {
   signal: "BUY" | "SELL" | "HOLD";
@@ -41,6 +53,18 @@ interface AnalysisData {
   chartAnalysis: string;
   marketSentiment: string;
   aiModel: string;
+  detectedAsset?: string;
+  currentPrice?: number;
+  priceTargets?: {
+    conservative?: PriceTarget;
+    moderate?: PriceTarget;
+    aggressive?: PriceTarget;
+  };
+  confidenceIntervals?: {
+    short?: ConfidenceInterval;
+    medium?: ConfidenceInterval;
+    long?: ConfidenceInterval;
+  };
 }
 
 const Index = () => {
@@ -62,7 +86,8 @@ const Index = () => {
   const [selectedRecord, setSelectedRecord] = useState<AnalysisRecord | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
-  
+  const [showComparison, setShowComparison] = useState(false);
+  const [marketAssets, setMarketAssets] = useState<MarketDataItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcuts
@@ -92,6 +117,8 @@ const Index = () => {
 
   useEffect(() => {
     loadAllAnalyses();
+    // Load market assets for comparison
+    fetchMarketData().then(setMarketAssets).catch(console.error);
   }, [user?.id]);
 
   const handleImageUpload = (image: string) => {
@@ -318,6 +345,10 @@ const Index = () => {
         chartAnalysis: result.chartAnalysis,
         marketSentiment: result.marketSentiment,
         aiModel: result.aiModel,
+        detectedAsset: result.detectedAsset || asset.symbol,
+        currentPrice: asset.price,
+        priceTargets: result.priceTargets,
+        confidenceIntervals: result.confidenceIntervals,
       };
 
       setAnalysis(analysisData);
@@ -382,7 +413,17 @@ const Index = () => {
       />
 
       <main id="analyze" className="max-w-7xl mx-auto px-6 pb-20">
-        <MarketTicker onSelectAsset={handleMarketAssetClick} />
+        {/* Market Ticker with Comparison Button */}
+        <div className="relative">
+          <MarketTicker onSelectAsset={handleMarketAssetClick} />
+          <button
+            onClick={() => setShowComparison(true)}
+            className="absolute top-4 right-14 flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/30"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Compare
+          </button>
+        </div>
 
         {/* Main Chat Section - Full Width */}
         {isChatMode && (
@@ -550,6 +591,11 @@ const Index = () => {
       <OnboardingTour />
       <OfflineIndicator />
       <ShortcutsHelp isOpen={showShortcutsHelp} onClose={() => setShowShortcutsHelp(false)} />
+      <MarketComparison
+        availableAssets={marketAssets}
+        isOpen={showComparison}
+        onClose={() => setShowComparison(false)}
+      />
       </div>
     </div>
   );

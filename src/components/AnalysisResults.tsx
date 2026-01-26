@@ -1,4 +1,17 @@
 import { TrendingUp, TrendingDown, Target, Shield, Percent, Brain, AlertTriangle, CheckCircle2 } from "lucide-react";
+import PriceTargets from "./PriceTargets";
+import QuickActions from "./QuickActions";
+
+interface PriceTarget {
+  price: number;
+  confidence: number;
+}
+
+interface ConfidenceInterval {
+  low: number;
+  high: number;
+  timeframe: string;
+}
 
 interface AnalysisData {
   signal: "BUY" | "SELL" | "HOLD";
@@ -13,6 +26,18 @@ interface AnalysisData {
   chartAnalysis: string;
   marketSentiment: string;
   aiModel: string;
+  detectedAsset?: string;
+  currentPrice?: number;
+  priceTargets?: {
+    conservative?: PriceTarget;
+    moderate?: PriceTarget;
+    aggressive?: PriceTarget;
+  };
+  confidenceIntervals?: {
+    short?: ConfidenceInterval;
+    medium?: ConfidenceInterval;
+    long?: ConfidenceInterval;
+  };
 }
 
 interface AnalysisResultsProps {
@@ -140,6 +165,28 @@ const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
           <div className="font-semibold text-accent">{analysis.riskReward}</div>
         </div>
       </div>
+
+      {/* Quick Actions */}
+      <div className="mb-6">
+        <QuickActions 
+          asset={analysis.detectedAsset}
+          takeProfit={analysis.takeProfit}
+          stopLoss={analysis.stopLoss}
+          currentPrice={analysis.currentPrice}
+        />
+      </div>
+
+      {/* Price Targets & Confidence Intervals */}
+      {(analysis.priceTargets || analysis.confidenceIntervals) && (
+        <div className="mb-6">
+          <PriceTargets
+            currentPrice={analysis.currentPrice}
+            priceTargets={analysis.priceTargets}
+            confidenceIntervals={analysis.confidenceIntervals}
+            signal={analysis.signal}
+          />
+        </div>
+      )}
 
       {/* Analysis Sections */}
       <div className="space-y-4">
