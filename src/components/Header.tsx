@@ -23,7 +23,7 @@ const Header = () => {
             <span className="text-[9px] tracking-[0.15em]">
               <span className="text-foreground">un</span><span className="text-bullish font-semibold">BULL</span><span className="text-foreground">ivable.</span>
               <span className="text-foreground ml-1">un</span><span className="text-bearish font-semibold">BEAR</span><span className="text-foreground">able.</span>
-              <span className="text-foreground ml-1"></span><span className="text-accent font-semibold">PROFIT</span><span className="text-foreground">able.</span>
+              <span className="text-foreground ml-1"></span><span className="text-accent font-semibold">PROFIT</span><span className="text-foreground">able?</span>
             </span>
           </div>
           
