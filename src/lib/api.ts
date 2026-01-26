@@ -38,6 +38,8 @@ export interface AnalysisResult {
   };
 }
 
+export type MarketCategory = 'crypto' | 'forex' | 'indices' | 'stocks';
+
 export interface MarketDataItem {
   symbol: string;
   price: number;
@@ -46,6 +48,7 @@ export interface MarketDataItem {
   volume24h: number;
   high24h: number;
   low24h: number;
+  category: MarketCategory;
 }
 
 export async function analyzeChart(
