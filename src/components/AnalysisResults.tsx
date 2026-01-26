@@ -86,7 +86,7 @@ const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
   const isBearish = analysis.signal === "SELL";
 
   return (
-    <div className={`glass-trading p-6 ${isBullish ? 'glow-bullish' : isBearish ? 'glow-bearish' : ''}`}>
+    <div className={`glass-trading p-6 ${isBullish ? 'signal-pulse-bullish glow-bullish' : isBearish ? 'signal-pulse-bearish glow-bearish' : ''}`}>
       {/* Signal Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
