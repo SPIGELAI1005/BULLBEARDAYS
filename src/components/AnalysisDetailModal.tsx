@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { X, TrendingUp, TrendingDown, Target, Shield, Percent, CheckCircle2, AlertTriangle, Save, MessageSquare } from "lucide-react";
+import { X, TrendingUp, TrendingDown, Target, Shield, Percent, CheckCircle2, AlertTriangle, Save, MessageSquare, Share2, Star } from "lucide-react";
 import { AnalysisRecord, updateAnalysisOutcome } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWatchlist } from "@/hooks/useWatchlist";
+import ShareCard from "./ShareCard";
 
 interface AnalysisDetailModalProps {
   analysis: AnalysisRecord | null;
@@ -13,8 +15,10 @@ interface AnalysisDetailModalProps {
 
 const AnalysisDetailModal = ({ analysis, isOpen, onClose, onUpdate }: AnalysisDetailModalProps) => {
   const { toast } = useToast();
+  const { addToWatchlist, isWatching } = useWatchlist();
   const [notes, setNotes] = useState(analysis?.notes || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   if (!isOpen || !analysis) return null;
 
@@ -72,12 +76,35 @@ const AnalysisDetailModal = ({ analysis, isOpen, onClose, onUpdate }: AnalysisDe
 
       {/* Modal */}
       <div className="relative glass-panel w-full max-w-2xl mx-4 p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-muted/50 transition-colors z-10"
-        >
-          <X className="w-5 h-5 text-muted-foreground" />
-        </button>
+        {/* Header actions */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          {analysis.detected_asset && (
+            <button
+              onClick={() => addToWatchlist(analysis.detected_asset!)}
+              className={`p-2 rounded-lg transition-colors ${
+                isWatching(analysis.detected_asset) 
+                  ? "bg-accent/20 text-accent" 
+                  : "hover:bg-muted/50 text-muted-foreground"
+              }`}
+              title="Add to watchlist"
+            >
+              <Star className={`w-5 h-5 ${isWatching(analysis.detected_asset) ? "fill-current" : ""}`} />
+            </button>
+          )}
+          <button
+            onClick={() => setShowShareCard(true)}
+            className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors"
+            title="Share"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -261,6 +288,11 @@ const AnalysisDetailModal = ({ analysis, isOpen, onClose, onUpdate }: AnalysisDe
           </button>
         </div>
       </div>
+
+      {/* Share Card Modal */}
+      {showShareCard && (
+        <ShareCard analysis={analysis} onClose={() => setShowShareCard(false)} />
+      )}
     </div>
   );
 };

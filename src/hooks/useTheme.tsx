@@ -10,6 +10,7 @@ interface ThemeContextType {
   resolvedTheme: "light" | "dark";
   setTheme: (theme: Theme) => void;
   setAccent: (accent: Accent) => void;
+  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -114,8 +115,15 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const toggleTheme = () => {
+    const themes: Theme[] = ["light", "dark", "system"];
+    const currentIndex = themes.indexOf(theme);
+    const nextTheme = themes[(currentIndex + 1) % themes.length];
+    setTheme(nextTheme);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, accent, resolvedTheme, setTheme, setAccent }}>
+    <ThemeContext.Provider value={{ theme, accent, resolvedTheme, setTheme, setAccent, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

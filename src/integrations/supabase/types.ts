@@ -83,6 +83,53 @@ export type Database = {
         }
         Relationships: []
       }
+      price_alerts: {
+        Row: {
+          alert_type: string
+          analysis_id: string | null
+          asset: string
+          created_at: string
+          current_price: number | null
+          id: string
+          is_triggered: boolean
+          target_price: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          analysis_id?: string | null
+          asset: string
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          is_triggered?: boolean
+          target_price: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          analysis_id?: string | null
+          asset?: string
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          is_triggered?: boolean
+          target_price?: number
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_alerts_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           accent_preference: string | null
@@ -90,6 +137,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          leaderboard_opt_in: boolean | null
           preferred_model: string | null
           theme_preference: string | null
           updated_at: string
@@ -101,6 +149,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          leaderboard_opt_in?: boolean | null
           preferred_model?: string | null
           theme_preference?: string | null
           updated_at?: string
@@ -112,12 +161,78 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          leaderboard_opt_in?: boolean | null
           preferred_model?: string | null
           theme_preference?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          dashboard_layout: Json | null
+          id: string
+          keyboard_shortcuts_enabled: boolean
+          onboarding_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dashboard_layout?: Json | null
+          id?: string
+          keyboard_shortcuts_enabled?: boolean
+          onboarding_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dashboard_layout?: Json | null
+          id?: string
+          keyboard_shortcuts_enabled?: boolean
+          onboarding_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          asset: string
+          created_at: string
+          id: string
+          last_analysis_id: string | null
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          asset: string
+          created_at?: string
+          id?: string
+          last_analysis_id?: string | null
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          asset?: string
+          created_at?: string
+          id?: string
+          last_analysis_id?: string | null
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_last_analysis_id_fkey"
+            columns: ["last_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
