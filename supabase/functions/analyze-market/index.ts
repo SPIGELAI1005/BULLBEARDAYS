@@ -39,6 +39,8 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -55,6 +57,22 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub;
     console.log('Authenticated user:', userId);
+
+    // Rate limiting check (20 market analyses per minute)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: rateLimitOk } = await supabaseAdmin.rpc('check_rate_limit', {
+      p_user_id: userId,
+      p_endpoint: 'analyze-market',
+      p_max_requests: 20,
+      p_window_minutes: 1
+    });
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const marketData = await req.json() as MarketAnalysisRequest;
     

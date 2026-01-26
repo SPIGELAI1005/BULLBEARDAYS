@@ -57,8 +57,23 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
     console.log('Authenticated user:', userId);
 
-    // Use service role for cache operations
+    // Use service role for cache and rate limit operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting check (60 market data requests per minute)
+    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+      p_user_id: userId,
+      p_endpoint: 'market-data',
+      p_max_requests: 60,
+      p_window_minutes: 1
+    });
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Check cache first
     const { data: cachedData } = await supabase
