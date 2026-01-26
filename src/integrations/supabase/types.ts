@@ -83,6 +83,30 @@ export type Database = {
         }
         Relationships: []
       }
+      market_data_cache: {
+        Row: {
+          created_at: string
+          data: Json
+          expires_at: string
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          expires_at: string
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          expires_at?: string
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           alert_type: string
