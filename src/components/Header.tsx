@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { User, LogOut, Settings } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/AuthModal";
+import ThemeToggle from "@/components/ThemeToggle";
 import logo from "@/assets/logo.jpeg";
 
 const Header = () => {
@@ -43,6 +44,8 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
+            
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-bullish/10 border border-bullish/20">
               <div className="w-2 h-2 rounded-full bg-bullish animate-pulse" />
               <span className="text-xs font-medium text-bullish">Markets Open</span>

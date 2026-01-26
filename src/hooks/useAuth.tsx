@@ -8,6 +8,8 @@ interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   preferred_model: string | null;
+  theme_preference: string | null;
+  accent_preference: string | null;
   created_at: string;
   updated_at: string;
 }
