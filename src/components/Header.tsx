@@ -19,11 +19,11 @@ const Header = () => {
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
         <div className="glass-panel-subtle max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-bold text-foreground tracking-tight">bullbeardays.com</span>
-            <span className="text-[10px] tracking-wide">
-              <span className="text-foreground">un</span><span className="text-bullish font-semibold">BULL</span><span className="text-foreground">ivable</span>
-              <span className="text-foreground mx-0.5">x</span>
-              <span className="text-foreground">un</span><span className="text-bearish font-semibold">BEAR</span><span className="text-foreground">able</span>
+            <span className="font-bold text-foreground tracking-[0.2em] text-sm">bullbeardays.com</span>
+            <span className="text-[9px] tracking-[0.15em]">
+              <span className="text-foreground">un</span><span className="text-bullish font-semibold">BULL</span><span className="text-foreground">ivable.</span>
+              <span className="text-foreground ml-1">un</span><span className="text-bearish font-semibold">BEAR</span><span className="text-foreground">able.</span>
+              <span className="text-foreground ml-1"></span><span className="text-accent font-semibold">PROFIT</span><span className="text-foreground">able.</span>
             </span>
           </div>
           
