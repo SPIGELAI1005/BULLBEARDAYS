@@ -48,7 +48,7 @@ interface AnalysisResultsProps {
 const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
   if (isLoading) {
     return (
-      <div className="glass-panel p-8">
+      <div className="glass-trading p-8">
         <div className="flex flex-col items-center justify-center min-h-[400px]">
           <div className="relative w-20 h-20 mb-6">
             <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
@@ -66,7 +66,7 @@ const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
 
   if (!analysis) {
     return (
-      <div className="glass-panel p-8">
+      <div className="glass-trading p-8">
         <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
           <div className="p-4 rounded-2xl bg-muted/50 mb-4">
             <Brain className="w-8 h-8 text-muted-foreground" />
@@ -86,7 +86,7 @@ const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
   const isBearish = analysis.signal === "SELL";
 
   return (
-    <div className={`glass-panel p-6 ${isBullish ? 'glow-bullish' : isBearish ? 'glow-bearish' : ''}`}>
+    <div className={`glass-trading p-6 ${isBullish ? 'glow-bullish' : isBearish ? 'glow-bearish' : ''}`}>
       {/* Signal Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
