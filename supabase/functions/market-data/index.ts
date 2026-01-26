@@ -183,7 +183,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in market-data function:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to fetch market data", details: String(error) }),
+      JSON.stringify({ error: "An error occurred while fetching market data. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

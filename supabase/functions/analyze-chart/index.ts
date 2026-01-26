@@ -188,7 +188,7 @@ Guidelines:
   } catch (error) {
     console.error("Error in analyze-chart:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed" }),
+      JSON.stringify({ error: "An error occurred during chart analysis. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
