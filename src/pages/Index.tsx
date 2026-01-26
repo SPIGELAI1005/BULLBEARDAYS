@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ChartUpload from "@/components/ChartUpload";
 import MultiChartUpload from "@/components/MultiChartUpload";
+import ChatInput from "@/components/ChatInput";
 import AIModelSelector from "@/components/AIModelSelector";
 import AnalyzeButton from "@/components/AnalyzeButton";
 import AnalysisResults from "@/components/AnalysisResults";
@@ -24,7 +25,7 @@ import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
 import { analyzeChart, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord } from "@/lib/api";
 import { uploadChartImage } from "@/lib/chartStorage";
-import { Layers, Grid2X2 } from "lucide-react";
+import { Layers, Grid2X2, MessageSquare } from "lucide-react";
 
 interface AnalysisData {
   signal: "BUY" | "SELL" | "HOLD";
@@ -50,6 +51,8 @@ const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isMultiChartMode, setIsMultiChartMode] = useState(false);
+  const [isChatMode, setIsChatMode] = useState(true); // Default to chat mode
+  const [chatContext, setChatContext] = useState<string>(""); // User's text context
   const [selectedModels, setSelectedModels] = useState<string[]>(["gemini"]);
   const [referenceModel, setReferenceModel] = useState("gemini");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -113,6 +116,85 @@ const Index = () => {
   const handleClearOneImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
+
+  // Chat mode submit handler - analyze images with optional text context
+  const handleChatSubmit = useCallback(async (message: string, images: string[]) => {
+    if (images.length === 0) {
+      toast({
+        title: "No Image",
+        description: "Please paste or upload a chart image to analyze",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Store context and use first image for analysis
+    setChatContext(message);
+    setUploadedImage(images[0]);
+    if (images.length > 1) {
+      setUploadedImages(images);
+    }
+
+    // Auto-trigger analysis
+    setIsAnalyzing(true);
+    setAnalysis(null);
+
+    try {
+      const result = await analyzeChart(images[0], selectedModels, referenceModel);
+      
+      const analysisData: AnalysisData = {
+        signal: result.signal,
+        probability: result.probability,
+        takeProfit: result.takeProfit,
+        stopLoss: result.stopLoss,
+        riskReward: result.riskReward,
+        reasoning: {
+          bullish: result.bullishReasons || [],
+          bearish: result.bearishReasons || [],
+        },
+        chartAnalysis: result.chartAnalysis,
+        marketSentiment: result.marketSentiment,
+        aiModel: result.aiModel,
+      };
+
+      setAnalysis(analysisData);
+
+      if (user) {
+        try {
+          let chartImageUrl: string | undefined;
+          const url = await uploadChartImage(images[0], user.id);
+          if (url) chartImageUrl = url;
+          
+          await saveAnalysis(result, chartImageUrl, message || undefined, user.id);
+          await loadAllAnalyses();
+          toast({
+            title: "Analysis Complete",
+            description: `${result.signal} signal with ${result.probability}% confidence`,
+          });
+        } catch (saveError) {
+          console.error("Failed to save analysis:", saveError);
+          toast({
+            title: "Analysis Complete",
+            description: `${result.signal} signal (not saved - sign in to save)`,
+          });
+        }
+      } else {
+        toast({
+          title: "Analysis Complete",
+          description: `${result.signal} signal - Sign in to save your history`,
+        });
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze chart",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [selectedModels, referenceModel, user, toast]);
 
   const handleToggleModel = (modelId: string) => {
     setSelectedModels((prev) => {
@@ -244,33 +326,51 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
           {/* Left Column - Upload & Models */}
           <div className="space-y-6">
-            {/* Mode Toggle */}
-            <div className="flex items-center gap-2 p-1 rounded-xl bg-muted/30 border border-border/30">
+            {/* Mode Toggle - Chat / Single / Multi */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/30 border border-border/30">
               <button
-                onClick={() => setIsMultiChartMode(false)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                  !isMultiChartMode 
+                onClick={() => { setIsChatMode(true); setIsMultiChartMode(false); }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                  isChatMode 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Chat
+              </button>
+              <button
+                onClick={() => { setIsChatMode(false); setIsMultiChartMode(false); }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                  !isChatMode && !isMultiChartMode 
                     ? "bg-primary text-primary-foreground" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Grid2X2 className="w-4 h-4" />
-                Single
+                Upload
               </button>
               <button
-                onClick={() => setIsMultiChartMode(true)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                  isMultiChartMode 
+                onClick={() => { setIsChatMode(false); setIsMultiChartMode(true); }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                  !isChatMode && isMultiChartMode 
                     ? "bg-primary text-primary-foreground" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Layers className="w-4 h-4" />
-                Multi-Chart
+                Multi
               </button>
             </div>
 
-            {isMultiChartMode ? (
+            {/* Chat Mode - Text + Paste Images */}
+            {isChatMode ? (
+              <ChatInput
+                onSubmit={handleChatSubmit}
+                isLoading={isAnalyzing}
+                placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
+              />
+            ) : isMultiChartMode ? (
               <MultiChartUpload
                 onImagesUpload={handleMultiImagesUpload}
                 uploadedImages={uploadedImages}
@@ -285,22 +385,27 @@ const Index = () => {
               />
             )}
             
-            <div className="ai-model-selector">
-              <AIModelSelector
-                selectedModels={selectedModels}
-                referenceModel={referenceModel}
-                onToggleModel={handleToggleModel}
-                onSetReference={handleSetReference}
-              />
-            </div>
-            
-            <div className="analyze-button">
-              <AnalyzeButton
-                onClick={handleAnalyze}
-                disabled={!canAnalyze}
-                isLoading={isAnalyzing}
-              />
-            </div>
+            {/* Only show AI selector and analyze button in non-chat modes */}
+            {!isChatMode && (
+              <>
+                <div className="ai-model-selector">
+                  <AIModelSelector
+                    selectedModels={selectedModels}
+                    referenceModel={referenceModel}
+                    onToggleModel={handleToggleModel}
+                    onSetReference={handleSetReference}
+                  />
+                </div>
+                
+                <div className="analyze-button">
+                  <AnalyzeButton
+                    onClick={handleAnalyze}
+                    disabled={!canAnalyze}
+                    isLoading={isAnalyzing}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Watchlist */}
             <WatchlistPanel />
