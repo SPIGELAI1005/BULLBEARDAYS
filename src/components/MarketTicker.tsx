@@ -79,31 +79,31 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
             </span>
           )}
         </div>
-        <button
-          onClick={loadMarketData}
-          disabled={isLoading}
-          className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
-        >
-          <RefreshCw className={`w-4 h-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-
-      {/* Category Tabs */}
-      <div className="flex items-center gap-1 p-1 mb-4 rounded-xl bg-muted/30 border border-border/30">
-        {CATEGORIES.map((cat) => (
+        <div className="flex items-center gap-1">
+          {/* Category Icons */}
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              title={cat.label}
+              className={`p-1.5 rounded-lg transition-colors ${
+                activeCategory === cat.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              {cat.icon}
+            </button>
+          ))}
+          <div className="w-px h-4 bg-border/50 mx-1" />
           <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-              activeCategory === cat.id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
+            onClick={loadMarketData}
+            disabled={isLoading}
+            className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
           >
-            {cat.icon}
-            <span className="hidden sm:inline">{cat.label}</span>
+            <RefreshCw className={`w-4 h-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
           </button>
-        ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
