@@ -3,5 +3,8 @@ project_id = "hrnqunfpjconysadqezn"
 [functions.analyze-chart]
 verify_jwt = false
 
+[functions.analyze-market]
+verify_jwt = false
+
 [functions.market-data]
 verify_jwt = false
