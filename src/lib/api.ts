@@ -1,5 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface PriceTarget {
+  price: number;
+  confidence: number;
+}
+
+export interface ConfidenceInterval {
+  low: number;
+  high: number;
+  timeframe: string;
+}
+
 export interface AnalysisResult {
   signal: "BUY" | "SELL" | "HOLD";
   probability: number;
@@ -14,6 +25,17 @@ export interface AnalysisResult {
   bearishReasons: string[];
   aiModel: string;
   modelsUsed?: string[];
+  currentPrice?: number;
+  priceTargets?: {
+    conservative?: PriceTarget;
+    moderate?: PriceTarget;
+    aggressive?: PriceTarget;
+  };
+  confidenceIntervals?: {
+    short?: ConfidenceInterval;
+    medium?: ConfidenceInterval;
+    long?: ConfidenceInterval;
+  };
 }
 
 export interface MarketDataItem {

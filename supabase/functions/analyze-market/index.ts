@@ -48,7 +48,17 @@ Based on the provided market data, return a JSON response with the following str
   "chartAnalysis": string (2-3 sentences about the technical setup based on price action and volume),
   "marketSentiment": string (1-2 sentences about current market momentum),
   "bullishReasons": string[] (3-4 reasons why this trade could succeed),
-  "bearishReasons": string[] (2-3 risk factors or reasons it might fail)
+  "bearishReasons": string[] (2-3 risk factors or reasons it might fail),
+  "priceTargets": {
+    "conservative": { "price": number, "confidence": number (0-100) },
+    "moderate": { "price": number, "confidence": number (0-100) },
+    "aggressive": { "price": number, "confidence": number (0-100) }
+  },
+  "confidenceIntervals": {
+    "short": { "low": number, "high": number, "timeframe": "24H" },
+    "medium": { "low": number, "high": number, "timeframe": "7D" },
+    "long": { "low": number, "high": number, "timeframe": "30D" }
+  }
 }
 
 Guidelines:
@@ -57,6 +67,8 @@ Guidelines:
 - Look at the change percentage to gauge short-term trend strength
 - Volume is a key indicator of conviction behind price moves
 - Be specific about price levels for TP/SL based on the current price and range
+- For priceTargets: conservative has highest confidence, aggressive has lowest
+- For confidenceIntervals: provide realistic price ranges for each timeframe
 - Return ONLY valid JSON, no markdown or extra text`;
 
     const userPrompt = `Analyze this market data and provide your trading recommendation:
