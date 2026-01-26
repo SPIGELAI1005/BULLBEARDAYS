@@ -20,10 +20,10 @@ const Header = () => {
         <div className="glass-panel-subtle max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="font-bold text-foreground tracking-tight">bullbeardays.com</span>
-            <span className="text-[10px] text-muted-foreground tracking-wide">
-              un<span className="text-bullish font-semibold">BULL</span>ivable
-              <span className="mx-0.5">x</span>
-              un<span className="text-bearish font-semibold">BEAR</span>able
+            <span className="text-[10px] tracking-wide">
+              <span className="text-foreground">un</span><span className="text-bullish font-semibold">BULL</span><span className="text-foreground">ivable</span>
+              <span className="text-foreground mx-0.5">x</span>
+              <span className="text-foreground">un</span><span className="text-bearish font-semibold">BEAR</span><span className="text-foreground">able</span>
             </span>
           </div>
           
