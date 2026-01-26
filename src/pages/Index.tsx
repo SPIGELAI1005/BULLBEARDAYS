@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ChartUpload from "@/components/ChartUpload";
 import AIModelSelector from "@/components/AIModelSelector";
 import AnalyzeButton from "@/components/AnalyzeButton";
 import AnalysisResults from "@/components/AnalysisResults";
+import MarketTicker from "@/components/MarketTicker";
+import HistoryPanel from "@/components/HistoryPanel";
+import { analyzeChart, saveAnalysis, AnalysisResult, AnalysisRecord } from "@/lib/api";
 
 interface AnalysisData {
   signal: "BUY" | "SELL" | "HOLD";
@@ -22,6 +26,7 @@ interface AnalysisData {
 }
 
 const Index = () => {
+  const { toast } = useToast();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedModels, setSelectedModels] = useState<string[]>(["gemini"]);
   const [referenceModel, setReferenceModel] = useState("gemini");
@@ -56,50 +61,76 @@ const Index = () => {
     setReferenceModel(modelId);
   };
 
-  const modelNames: Record<string, string> = {
-    gemini: "Google Gemini",
-    gpt: "OpenAI GPT",
-    claude: "Anthropic Claude",
-  };
-
   const handleAnalyze = async () => {
     if (!uploadedImage || selectedModels.length === 0) return;
 
     setIsAnalyzing(true);
     setAnalysis(null);
 
-    // Simulate AI analysis with realistic delay
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      const result = await analyzeChart(uploadedImage, selectedModels, referenceModel);
+      
+      // Convert API response to component format
+      const analysisData: AnalysisData = {
+        signal: result.signal,
+        probability: result.probability,
+        takeProfit: result.takeProfit,
+        stopLoss: result.stopLoss,
+        riskReward: result.riskReward,
+        reasoning: {
+          bullish: result.bullishReasons || [],
+          bearish: result.bearishReasons || [],
+        },
+        chartAnalysis: result.chartAnalysis,
+        marketSentiment: result.marketSentiment,
+        aiModel: result.aiModel,
+      };
 
-    // Mock analysis result - will be replaced with real AI integration
-    const mockAnalysis: AnalysisData = {
-      signal: Math.random() > 0.5 ? "BUY" : "SELL",
-      probability: Math.floor(65 + Math.random() * 25),
-      takeProfit: `+${(1.5 + Math.random() * 2).toFixed(1)}%`,
-      stopLoss: `-${(0.8 + Math.random() * 0.7).toFixed(1)}%`,
-      riskReward: `1:${(2 + Math.random()).toFixed(1)}`,
+      setAnalysis(analysisData);
+
+      // Save to history
+      try {
+        await saveAnalysis(result);
+        toast({
+          title: "Analysis Complete",
+          description: `${result.signal} signal with ${result.probability}% confidence`,
+        });
+      } catch (saveError) {
+        console.error("Failed to save analysis:", saveError);
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze chart",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSelectFromHistory = (record: AnalysisRecord) => {
+    const analysisData: AnalysisData = {
+      signal: record.signal as "BUY" | "SELL" | "HOLD",
+      probability: record.probability,
+      takeProfit: record.take_profit || "N/A",
+      stopLoss: record.stop_loss || "N/A",
+      riskReward: record.risk_reward || "N/A",
       reasoning: {
-        bullish: [
-          "Strong support level identified at current price zone",
-          "RSI showing bullish divergence on the 15m timeframe",
-          "Volume profile indicates accumulation phase",
-          "Moving averages alignment suggests upward momentum",
-        ],
-        bearish: [
-          "Major resistance zone overhead within 2% range",
-          "Broader market showing weakness in recent sessions",
-          "Potential head and shoulders pattern forming on higher timeframe",
-        ],
+        bullish: record.bullish_reasons || [],
+        bearish: record.bearish_reasons || [],
       },
-      chartAnalysis:
-        "The chart shows a consolidation pattern near a key support level. Price action indicates buyers are defending this zone with increasing volume. The structure suggests a potential breakout to the upside if current support holds. Key indicators (RSI, MACD) are showing early signs of momentum shift.",
-      marketSentiment:
-        "Current market sentiment is cautiously optimistic. Social media analysis shows mixed signals with slightly bullish bias. Institutional flow data suggests accumulation at current levels. News sentiment remains neutral with no major catalysts expected in the near term.",
-      aiModel: modelNames[referenceModel],
+      chartAnalysis: record.chart_analysis || "",
+      marketSentiment: record.market_sentiment || "",
+      aiModel: record.ai_model,
     };
-
-    setAnalysis(mockAnalysis);
-    setIsAnalyzing(false);
+    setAnalysis(analysisData);
+    
+    toast({
+      title: "Loaded from History",
+      description: `${record.detected_asset || 'Analysis'} - ${record.signal}`,
+    });
   };
 
   const canAnalyze = uploadedImage && selectedModels.length > 0;
@@ -110,7 +141,10 @@ const Index = () => {
       <Hero />
 
       <main id="analyze" className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Market Ticker */}
+        <MarketTicker />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Upload & Models */}
           <div className="space-y-6">
             <ChartUpload
@@ -133,9 +167,14 @@ const Index = () => {
             />
           </div>
 
-          {/* Right Column - Results */}
+          {/* Middle Column - Results */}
           <div>
             <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+          </div>
+
+          {/* Right Column - History */}
+          <div>
+            <HistoryPanel onSelectAnalysis={handleSelectFromHistory} />
           </div>
         </div>
       </main>

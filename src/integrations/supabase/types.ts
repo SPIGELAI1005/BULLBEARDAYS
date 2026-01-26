@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analyses: {
+        Row: {
+          ai_model: string
+          bearish_reasons: string[] | null
+          bullish_reasons: string[] | null
+          chart_analysis: string | null
+          chart_image_url: string | null
+          created_at: string
+          detected_asset: string | null
+          id: string
+          market_sentiment: string | null
+          outcome: string | null
+          outcome_notes: string | null
+          probability: number
+          risk_reward: string | null
+          session_id: string | null
+          signal: string
+          stop_loss: string | null
+          take_profit: string | null
+          timeframe: string | null
+        }
+        Insert: {
+          ai_model: string
+          bearish_reasons?: string[] | null
+          bullish_reasons?: string[] | null
+          chart_analysis?: string | null
+          chart_image_url?: string | null
+          created_at?: string
+          detected_asset?: string | null
+          id?: string
+          market_sentiment?: string | null
+          outcome?: string | null
+          outcome_notes?: string | null
+          probability: number
+          risk_reward?: string | null
+          session_id?: string | null
+          signal: string
+          stop_loss?: string | null
+          take_profit?: string | null
+          timeframe?: string | null
+        }
+        Update: {
+          ai_model?: string
+          bearish_reasons?: string[] | null
+          bullish_reasons?: string[] | null
+          chart_analysis?: string | null
+          chart_image_url?: string | null
+          created_at?: string
+          detected_asset?: string | null
+          id?: string
+          market_sentiment?: string | null
+          outcome?: string | null
+          outcome_notes?: string | null
+          probability?: number
+          risk_reward?: string | null
+          session_id?: string | null
+          signal?: string
+          stop_loss?: string | null
+          take_profit?: string | null
+          timeframe?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
