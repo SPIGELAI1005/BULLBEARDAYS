@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,7 @@ interface MarketData {
 
 // Popular trading pairs to show
 const CRYPTO_PAIRS = ['bitcoin', 'ethereum', 'solana'];
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes cache
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -24,6 +26,26 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check cache first
+    const { data: cachedData } = await supabase
+      .from('market_data_cache')
+      .select('symbol, data, expires_at')
+      .gt('expires_at', new Date().toISOString());
+
+    if (cachedData && cachedData.length >= 6) {
+      console.log('Cache hit - returning cached market data');
+      const marketData = cachedData.map((item: { data: MarketData }) => item.data);
+      return new Response(
+        JSON.stringify({ data: marketData, timestamp: new Date().toISOString(), cached: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log('Cache miss - fetching fresh market data');
     const marketData: MarketData[] = [];
     
     // Try to fetch crypto data from CoinGecko
@@ -37,7 +59,6 @@ serve(async (req) => {
         }
       );
       
-      // Check if response is OK before parsing
       if (cryptoResponse.ok) {
         const contentType = cryptoResponse.headers.get('content-type');
         if (contentType?.includes('application/json')) {
@@ -57,12 +78,10 @@ serve(async (req) => {
             }
           }
         } else {
-          // Log non-JSON response for debugging
           const textResponse = await cryptoResponse.text();
           console.warn("CoinGecko returned non-JSON response:", textResponse.substring(0, 100));
         }
       } else {
-        // Handle rate limiting or other errors
         const errorText = await cryptoResponse.text();
         console.warn(`CoinGecko API error (${cryptoResponse.status}):`, errorText.substring(0, 100));
       }
@@ -93,7 +112,7 @@ serve(async (req) => {
       }
     }
 
-    // Add simulated forex data (since free forex APIs are limited)
+    // Add simulated forex data
     const forexPairs = [
       { symbol: 'EUR/USD', basePrice: 1.0850 },
       { symbol: 'GBP/USD', basePrice: 1.2650 },
@@ -114,8 +133,21 @@ serve(async (req) => {
       });
     }
 
+    // Store in cache
+    const expiresAt = new Date(Date.now() + CACHE_DURATION_MS).toISOString();
+    const cachePromises = marketData.map((item) =>
+      supabase.from('market_data_cache').upsert({
+        symbol: item.symbol,
+        data: item,
+        expires_at: expiresAt,
+      })
+    );
+    
+    await Promise.all(cachePromises);
+    console.log('Cached market data for', marketData.length, 'symbols');
+
     return new Response(
-      JSON.stringify({ data: marketData, timestamp: new Date().toISOString() }),
+      JSON.stringify({ data: marketData, timestamp: new Date().toISOString(), cached: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
