@@ -59,18 +59,19 @@ const CandlestickBackground = () => {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Get computed styles for theming
+      // Get computed styles for theming - use direct colors for reliability
       const styles = getComputedStyle(document.documentElement);
       const bullishHsl = styles.getPropertyValue("--bullish").trim();
       const bearishHsl = styles.getPropertyValue("--bearish").trim();
 
-      // More vibrant green/red colors for candlesticks
-      const bullishColor = `hsla(${bullishHsl}, 0.4)`;
-      const bearishColor = `hsla(${bearishHsl}, 0.4)`;
-      const wickBullish = `hsla(${bullishHsl}, 0.3)`;
-      const wickBearish = `hsla(${bearishHsl}, 0.3)`;
-      const glowBullish = `hsla(${bullishHsl}, 0.6)`;
-      const glowBearish = `hsla(${bearishHsl}, 0.6)`;
+      // Parse HSL values and create proper color strings
+      // CSS variables are in format "142 71% 45%" - need to convert to proper hsla
+      const bullishColor = `hsl(${bullishHsl.replace(/ /g, ', ')} / 0.5)`;
+      const bearishColor = `hsl(${bearishHsl.replace(/ /g, ', ')} / 0.5)`;
+      const wickBullish = `hsl(${bullishHsl.replace(/ /g, ', ')} / 0.4)`;
+      const wickBearish = `hsl(${bearishHsl.replace(/ /g, ', ')} / 0.4)`;
+      const glowBullish = `hsl(${bullishHsl.replace(/ /g, ', ')} / 0.7)`;
+      const glowBearish = `hsl(${bearishHsl.replace(/ /g, ', ')} / 0.7)`;
 
       const candles = candlesRef.current;
 
