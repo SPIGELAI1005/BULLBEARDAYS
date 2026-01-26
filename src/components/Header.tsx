@@ -3,7 +3,6 @@ import { User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/AuthModal";
 import ThemeToggle from "@/components/ThemeToggle";
-import logo from "@/assets/logo.jpeg";
 
 const Header = () => {
   const { user, profile, isLoading, signOut } = useAuth();
@@ -19,16 +18,13 @@ const Header = () => {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
         <div className="glass-panel-subtle max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img 
-              src={logo} 
-              alt="BullBearDays" 
-              className="h-10 w-10 rounded-lg object-cover"
-            />
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground tracking-tight">BullBearDays</span>
-              <span className="text-xs text-muted-foreground">AI Trading Analysis</span>
-            </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-foreground tracking-tight">bullbeardays.com</span>
+            <span className="text-xs text-muted-foreground">
+              <span className="text-bullish font-medium">unBULLivable</span>
+              <span className="mx-1">x</span>
+              <span className="text-bearish font-medium">unBEARable</span>
+            </span>
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
