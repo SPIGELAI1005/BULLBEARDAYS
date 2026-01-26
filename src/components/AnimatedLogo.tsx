@@ -2,128 +2,206 @@ import { useEffect, useState } from "react";
 import bullbearLogo from "@/assets/bullbeardays-logo.png";
 
 const AnimatedLogo = () => {
-  const [timeOfDay, setTimeOfDay] = useState<"sunrise" | "day" | "sunset" | "night">("day");
+  const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
-    const updateTimeOfDay = () => {
-      const hour = new Date().getHours();
-      if (hour >= 5 && hour < 8) {
-        setTimeOfDay("sunrise");
-      } else if (hour >= 8 && hour < 17) {
-        setTimeOfDay("day");
-      } else if (hour >= 17 && hour < 20) {
-        setTimeOfDay("sunset");
-      } else {
-        setTimeOfDay("night");
-      }
-    };
-
-    updateTimeOfDay();
-    const interval = setInterval(updateTimeOfDay, 60000); // Update every minute
+    const interval = setInterval(() => {
+      setPulse((prev) => (prev + 1) % 360);
+    }, 50);
     return () => clearInterval(interval);
   }, []);
 
-  // Dynamic colors based on time of day
-  const getGlowColors = () => {
-    switch (timeOfDay) {
-      case "sunrise":
-        return {
-          outer: "from-amber-400 via-orange-400 to-rose-400",
-          mid: "from-amber-300/40 via-orange-300/60 to-rose-300/40",
-          core: "from-amber-100 via-yellow-100 to-white",
-          sparkle: "bg-amber-200",
-          ambient: "rgba(251, 191, 36, 0.15)",
-        };
-      case "day":
-        return {
-          outer: "from-bullish via-accent to-primary",
-          mid: "from-emerald-300/30 via-accent/50 to-green-300/30",
-          core: "from-white via-amber-100 to-white",
-          sparkle: "bg-white",
-          ambient: "rgba(34, 197, 94, 0.1)",
-        };
-      case "sunset":
-        return {
-          outer: "from-orange-500 via-rose-500 to-purple-500",
-          mid: "from-orange-300/40 via-rose-400/60 to-purple-300/40",
-          core: "from-orange-100 via-rose-100 to-white",
-          sparkle: "bg-orange-200",
-          ambient: "rgba(249, 115, 22, 0.15)",
-        };
-      case "night":
-        return {
-          outer: "from-indigo-500 via-purple-500 to-blue-600",
-          mid: "from-indigo-300/30 via-purple-400/50 to-blue-400/30",
-          core: "from-indigo-100 via-blue-100 to-white",
-          sparkle: "bg-indigo-200",
-          ambient: "rgba(99, 102, 241, 0.12)",
-        };
-    }
-  };
-
-  const colors = getGlowColors();
-
   return (
     <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center">
-      {/* Ambient background glow */}
+      {/* Outer professional gradient ring */}
+      <div className="absolute inset-0 rounded-full opacity-20">
+        <div 
+          className="w-full h-full rounded-full"
+          style={{
+            background: `conic-gradient(from ${pulse}deg, hsl(var(--bullish)), hsl(var(--accent)), hsl(var(--bearish)), hsl(var(--bullish)))`,
+            filter: 'blur(20px)',
+          }}
+        />
+      </div>
+
+      {/* Inner hexagonal grid pattern - trading aesthetic */}
+      <svg className="absolute inset-4 w-[calc(100%-32px)] h-[calc(100%-32px)] opacity-10" viewBox="0 0 100 100">
+        {/* Hexagonal grid lines */}
+        <defs>
+          <pattern id="hexGrid" width="20" height="17.32" patternUnits="userSpaceOnUse">
+            <path 
+              d="M10 0 L20 5.77 L20 17.32 L10 23.09 L0 17.32 L0 5.77 Z" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="0.5"
+              className="text-foreground"
+            />
+          </pattern>
+        </defs>
+        <circle cx="50" cy="50" r="48" fill="url(#hexGrid)" />
+      </svg>
+
+      {/* Ascending trend line - bullish motivation */}
+      <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="trendGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(var(--bearish))" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="hsl(var(--accent))" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="hsl(var(--bullish))" stopOpacity="1" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        {/* Main ascending trend line */}
+        <path 
+          d="M 15 75 Q 30 70, 40 60 T 55 45 T 70 35 T 85 20" 
+          fill="none" 
+          stroke="url(#trendGradient)" 
+          strokeWidth="2"
+          strokeLinecap="round"
+          filter="url(#glow)"
+          className="animate-pulse-slow"
+        />
+        
+        {/* Support line */}
+        <path 
+          d="M 15 85 L 85 55" 
+          fill="none" 
+          stroke="hsl(var(--bullish))" 
+          strokeWidth="0.5"
+          strokeDasharray="4 4"
+          opacity="0.4"
+        />
+        
+        {/* Resistance line */}
+        <path 
+          d="M 15 55 L 85 25" 
+          fill="none" 
+          stroke="hsl(var(--bearish))" 
+          strokeWidth="0.5"
+          strokeDasharray="4 4"
+          opacity="0.4"
+        />
+      </svg>
+
+      {/* Circular market pulse - like a heartbeat/trading volume */}
+      <div className="absolute inset-6">
+        <svg className="w-full h-full opacity-20" viewBox="0 0 100 100">
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="45" 
+            fill="none" 
+            stroke="hsl(var(--primary))" 
+            strokeWidth="0.5"
+            strokeDasharray="8 4"
+            className="animate-spin-slow"
+          />
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="38" 
+            fill="none" 
+            stroke="hsl(var(--accent))" 
+            strokeWidth="0.3"
+            strokeDasharray="4 8"
+            style={{ animation: 'spin 30s linear infinite reverse' }}
+          />
+        </svg>
+      </div>
+
+      {/* Candlestick silhouettes */}
+      <svg className="absolute inset-0 w-full h-full opacity-15" viewBox="0 0 100 100">
+        {/* Green candles (bullish) */}
+        <rect x="20" y="45" width="3" height="20" fill="hsl(var(--bullish))" rx="0.5" />
+        <line x1="21.5" y1="40" x2="21.5" y2="70" stroke="hsl(var(--bullish))" strokeWidth="0.5" />
+        
+        <rect x="35" y="35" width="3" height="25" fill="hsl(var(--bullish))" rx="0.5" />
+        <line x1="36.5" y1="30" x2="36.5" y2="65" stroke="hsl(var(--bullish))" strokeWidth="0.5" />
+        
+        <rect x="62" y="30" width="3" height="22" fill="hsl(var(--bullish))" rx="0.5" />
+        <line x1="63.5" y1="25" x2="63.5" y2="58" stroke="hsl(var(--bullish))" strokeWidth="0.5" />
+        
+        {/* Red candles (bearish) */}
+        <rect x="48" y="40" width="3" height="18" fill="hsl(var(--bearish))" rx="0.5" />
+        <line x1="49.5" y1="35" x2="49.5" y2="63" stroke="hsl(var(--bearish))" strokeWidth="0.5" />
+        
+        <rect x="76" y="38" width="3" height="15" fill="hsl(var(--bearish))" rx="0.5" />
+        <line x1="77.5" y1="33" x2="77.5" y2="58" stroke="hsl(var(--bearish))" strokeWidth="0.5" />
+      </svg>
+
+      {/* Subtle radial glow behind logo */}
       <div 
-        className="absolute -inset-8 rounded-full blur-3xl animate-pulse-slow"
-        style={{ backgroundColor: colors.ambient }}
+        className="absolute inset-8 rounded-full animate-pulse-slow"
+        style={{
+          background: 'radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)',
+        }}
       />
 
-      {/* Outer glow rings - time-based gradient */}
-      <div className="absolute inset-0 animate-ping-slow opacity-25">
-        <div className={`w-full h-full rounded-full bg-gradient-to-r ${colors.outer} blur-2xl`} />
-      </div>
-      
-      {/* Mid pulse ring - time-based gradient */}
-      <div className="absolute inset-4 animate-pulse-glow">
-        <div className={`w-full h-full rounded-full bg-gradient-to-r ${colors.mid} blur-xl`} />
-      </div>
-      
-      {/* Cinema light center - bright pulsating core */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20">
-        <div className={`absolute inset-0 animate-cinema-pulse rounded-full bg-gradient-radial ${colors.core} blur-md`} />
-        <div className={`absolute inset-2 animate-cinema-pulse-delay rounded-full bg-gradient-radial ${colors.core} blur-sm`} />
-        <div className="absolute inset-4 rounded-full bg-white/90 blur-[2px] animate-twinkle" />
-      </div>
-      
-      {/* Light rays emanating from center */}
-      <div className="absolute inset-0 animate-spin-slow opacity-30">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-32 bg-gradient-to-t from-transparent via-white/60 to-transparent blur-sm" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-2 bg-gradient-to-r from-transparent via-white/60 to-transparent blur-sm" />
-      </div>
+      {/* Clean inner glow ring */}
+      <div 
+        className="absolute inset-12 rounded-full border border-primary/20"
+        style={{
+          boxShadow: 'inset 0 0 30px hsl(var(--primary) / 0.1), 0 0 40px hsl(var(--primary) / 0.1)',
+        }}
+      />
 
-      {/* Horizon line for sunrise/sunset */}
-      {(timeOfDay === "sunrise" || timeOfDay === "sunset") && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-40 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-      )}
-      
-      {/* Logo image with mix-blend for visibility */}
-      <div className="relative z-10 w-40 h-40 md:w-52 md:h-52 drop-shadow-2xl">
-        <img
-          src={bullbearLogo}
-          alt="BullBearDays - Bull vs Bear"
-          className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] animate-float-subtle"
+      {/* Data points flowing along the trend */}
+      <div className="absolute inset-0">
+        <div 
+          className="absolute w-2 h-2 bg-bullish rounded-full shadow-[0_0_8px_hsl(var(--bullish))]"
           style={{
-            filter: "drop-shadow(0 0 30px rgba(255,200,50,0.4)) drop-shadow(0 0 60px rgba(255,255,255,0.2))"
+            top: '25%',
+            left: '75%',
+            animation: 'pulse 2s ease-in-out infinite',
+          }}
+        />
+        <div 
+          className="absolute w-1.5 h-1.5 bg-accent rounded-full shadow-[0_0_6px_hsl(var(--accent))]"
+          style={{
+            top: '45%',
+            left: '55%',
+            animation: 'pulse 2s ease-in-out infinite 0.5s',
+          }}
+        />
+        <div 
+          className="absolute w-1 h-1 bg-bullish/80 rounded-full shadow-[0_0_4px_hsl(var(--bullish))]"
+          style={{
+            top: '60%',
+            left: '40%',
+            animation: 'pulse 2s ease-in-out infinite 1s',
           }}
         />
       </div>
       
-      {/* Sparkle effects - time-based colors */}
-      <div className={`absolute top-1/4 left-1/4 w-2 h-2 ${colors.sparkle} rounded-full animate-sparkle opacity-80`} />
-      <div className={`absolute top-1/3 right-1/4 w-1.5 h-1.5 ${colors.sparkle} rounded-full animate-sparkle-delay opacity-70`} />
-      <div className={`absolute bottom-1/3 left-1/3 w-1 h-1 ${colors.sparkle} rounded-full animate-sparkle-slow opacity-60`} />
-      <div className={`absolute bottom-1/4 right-1/3 w-2 h-2 ${colors.sparkle} rounded-full animate-sparkle-delay opacity-75`} />
-
-      {/* Time indicator */}
-      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-muted-foreground/60 capitalize font-medium tracking-wide">
-        {timeOfDay === "sunrise" && "🌅"}
-        {timeOfDay === "day" && "☀️"}
-        {timeOfDay === "sunset" && "🌇"}
-        {timeOfDay === "night" && "🌙"}
+      {/* Logo image - clean and prominent */}
+      <div className="relative z-10 w-36 h-36 md:w-48 md:h-48">
+        <img
+          src={bullbearLogo}
+          alt="BullBearDays - Bull vs Bear"
+          className="w-full h-full object-contain animate-float-subtle"
+          style={{
+            filter: 'drop-shadow(0 4px 20px hsl(var(--primary) / 0.3))',
+          }}
+        />
       </div>
+
+      {/* Bottom accent line - like a price chart baseline */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-px">
+        <div className="w-full h-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+      </div>
+
+      {/* Corner accents - professional framing */}
+      <div className="absolute top-4 left-4 w-4 h-4 border-l border-t border-primary/20" />
+      <div className="absolute top-4 right-4 w-4 h-4 border-r border-t border-primary/20" />
+      <div className="absolute bottom-4 left-4 w-4 h-4 border-l border-b border-primary/20" />
+      <div className="absolute bottom-4 right-4 w-4 h-4 border-r border-b border-primary/20" />
     </div>
   );
 };
