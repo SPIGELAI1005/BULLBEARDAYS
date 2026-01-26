@@ -77,12 +77,15 @@ export interface AnalysisRecord {
   outcome: string | null;
   outcome_notes: string | null;
   session_id: string | null;
+  user_id: string | null;
+  notes: string | null;
 }
 
 export async function saveAnalysis(
   analysis: AnalysisResult,
   chartImageUrl?: string,
-  sessionId?: string
+  sessionId?: string,
+  userId?: string
 ): Promise<AnalysisRecord> {
   const { data, error } = await supabase
     .from('analyses')
@@ -101,6 +104,7 @@ export async function saveAnalysis(
       bearish_reasons: analysis.bearishReasons,
       ai_model: analysis.aiModel,
       session_id: sessionId || null,
+      user_id: userId || null,
     })
     .select()
     .single();
@@ -113,12 +117,18 @@ export async function saveAnalysis(
   return data;
 }
 
-export async function getAnalysisHistory(limit = 20): Promise<AnalysisRecord[]> {
-  const { data, error } = await supabase
+export async function getAnalysisHistory(limit = 20, userId?: string): Promise<AnalysisRecord[]> {
+  let query = supabase
     .from('analyses')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Fetch history error:", error);

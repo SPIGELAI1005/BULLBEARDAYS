@@ -25,6 +25,7 @@ export type Database = {
           detected_asset: string | null
           id: string
           market_sentiment: string | null
+          notes: string | null
           outcome: string | null
           outcome_notes: string | null
           probability: number
@@ -34,6 +35,7 @@ export type Database = {
           stop_loss: string | null
           take_profit: string | null
           timeframe: string | null
+          user_id: string | null
         }
         Insert: {
           ai_model: string
@@ -45,6 +47,7 @@ export type Database = {
           detected_asset?: string | null
           id?: string
           market_sentiment?: string | null
+          notes?: string | null
           outcome?: string | null
           outcome_notes?: string | null
           probability: number
@@ -54,6 +57,7 @@ export type Database = {
           stop_loss?: string | null
           take_profit?: string | null
           timeframe?: string | null
+          user_id?: string | null
         }
         Update: {
           ai_model?: string
@@ -65,6 +69,7 @@ export type Database = {
           detected_asset?: string | null
           id?: string
           market_sentiment?: string | null
+          notes?: string | null
           outcome?: string | null
           outcome_notes?: string | null
           probability?: number
@@ -74,6 +79,37 @@ export type Database = {
           stop_loss?: string | null
           take_profit?: string | null
           timeframe?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          preferred_model: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          preferred_model?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          preferred_model?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ChartUpload from "@/components/ChartUpload";
@@ -8,7 +9,9 @@ import AnalyzeButton from "@/components/AnalyzeButton";
 import AnalysisResults from "@/components/AnalysisResults";
 import MarketTicker from "@/components/MarketTicker";
 import HistoryPanel from "@/components/HistoryPanel";
-import { analyzeChart, saveAnalysis, AnalysisResult, AnalysisRecord } from "@/lib/api";
+import PerformanceDashboard from "@/components/PerformanceDashboard";
+import AnalysisDetailModal from "@/components/AnalysisDetailModal";
+import { analyzeChart, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord } from "@/lib/api";
 
 interface AnalysisData {
   signal: "BUY" | "SELL" | "HOLD";
@@ -27,11 +30,28 @@ interface AnalysisData {
 
 const Index = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedModels, setSelectedModels] = useState<string[]>(["gemini"]);
   const [referenceModel, setReferenceModel] = useState("gemini");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  const [allAnalyses, setAllAnalyses] = useState<AnalysisRecord[]>([]);
+  const [selectedRecord, setSelectedRecord] = useState<AnalysisRecord | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  const loadAllAnalyses = async () => {
+    try {
+      const data = await getAnalysisHistory(100, user?.id);
+      setAllAnalyses(data);
+    } catch (error) {
+      console.error("Failed to load analyses:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadAllAnalyses();
+  }, [user?.id]);
 
   const handleImageUpload = (image: string) => {
     setUploadedImage(image);
@@ -88,15 +108,27 @@ const Index = () => {
 
       setAnalysis(analysisData);
 
-      // Save to history
-      try {
-        await saveAnalysis(result);
+      // Save to history (only if user is logged in)
+      if (user) {
+        try {
+          await saveAnalysis(result, undefined, undefined, user.id);
+          await loadAllAnalyses();
+          toast({
+            title: "Analysis Complete",
+            description: `${result.signal} signal with ${result.probability}% confidence`,
+          });
+        } catch (saveError) {
+          console.error("Failed to save analysis:", saveError);
+          toast({
+            title: "Analysis Complete",
+            description: `${result.signal} signal (not saved - sign in to save)`,
+          });
+        }
+      } else {
         toast({
           title: "Analysis Complete",
-          description: `${result.signal} signal with ${result.probability}% confidence`,
+          description: `${result.signal} signal - Sign in to save your history`,
         });
-      } catch (saveError) {
-        console.error("Failed to save analysis:", saveError);
       }
     } catch (error) {
       console.error("Analysis failed:", error);
@@ -111,26 +143,13 @@ const Index = () => {
   };
 
   const handleSelectFromHistory = (record: AnalysisRecord) => {
-    const analysisData: AnalysisData = {
-      signal: record.signal as "BUY" | "SELL" | "HOLD",
-      probability: record.probability,
-      takeProfit: record.take_profit || "N/A",
-      stopLoss: record.stop_loss || "N/A",
-      riskReward: record.risk_reward || "N/A",
-      reasoning: {
-        bullish: record.bullish_reasons || [],
-        bearish: record.bearish_reasons || [],
-      },
-      chartAnalysis: record.chart_analysis || "",
-      marketSentiment: record.market_sentiment || "",
-      aiModel: record.ai_model,
-    };
-    setAnalysis(analysisData);
-    
-    toast({
-      title: "Loaded from History",
-      description: `${record.detected_asset || 'Analysis'} - ${record.signal}`,
-    });
+    setSelectedRecord(record);
+    setShowDetailModal(true);
+  };
+
+  const handleDetailModalClose = () => {
+    setShowDetailModal(false);
+    setSelectedRecord(null);
   };
 
   const canAnalyze = uploadedImage && selectedModels.length > 0;
@@ -144,7 +163,7 @@ const Index = () => {
         {/* Market Ticker */}
         <MarketTicker />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
           {/* Left Column - Upload & Models */}
           <div className="space-y-6">
             <ChartUpload
@@ -174,9 +193,22 @@ const Index = () => {
 
           {/* Right Column - History */}
           <div>
-            <HistoryPanel onSelectAnalysis={handleSelectFromHistory} />
+            <HistoryPanel 
+              onSelectAnalysis={handleSelectFromHistory}
+              analyses={allAnalyses.slice(0, 20)}
+              onRefresh={loadAllAnalyses}
+            />
           </div>
         </div>
+
+        {/* Performance Dashboard */}
+        <section id="performance" className="pt-8">
+          <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+            <span className="text-gradient-gold">Performance</span>
+            <span className="text-foreground">Dashboard</span>
+          </h2>
+          <PerformanceDashboard analyses={allAnalyses} />
+        </section>
       </main>
 
       {/* Footer */}
@@ -190,6 +222,14 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Detail Modal */}
+      <AnalysisDetailModal
+        analysis={selectedRecord}
+        isOpen={showDetailModal}
+        onClose={handleDetailModalClose}
+        onUpdate={loadAllAnalyses}
+      />
     </div>
   );
 };

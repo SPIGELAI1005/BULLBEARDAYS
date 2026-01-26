@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { Clock, TrendingUp, TrendingDown, Minus, CheckCircle, XCircle, MoreVertical } from "lucide-react";
 import { getAnalysisHistory, updateAnalysisOutcome, AnalysisRecord } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HistoryPanelProps {
   onSelectAnalysis?: (analysis: AnalysisRecord) => void;
+  analyses?: AnalysisRecord[];
+  onRefresh?: () => void;
 }
 
-const HistoryPanel = ({ onSelectAnalysis }: HistoryPanelProps) => {
+const HistoryPanel = ({ onSelectAnalysis, analyses: externalAnalyses, onRefresh }: HistoryPanelProps) => {
+  const { user } = useAuth();
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -15,7 +19,7 @@ const HistoryPanel = ({ onSelectAnalysis }: HistoryPanelProps) => {
   const loadHistory = async () => {
     try {
       setIsLoading(true);
-      const data = await getAnalysisHistory(20);
+      const data = await getAnalysisHistory(20, user?.id);
       setHistory(data);
     } catch (error) {
       console.error("Failed to load history:", error);
@@ -25,6 +29,12 @@ const HistoryPanel = ({ onSelectAnalysis }: HistoryPanelProps) => {
   };
 
   useEffect(() => {
+    if (externalAnalyses) {
+      setHistory(externalAnalyses);
+      setIsLoading(false);
+      return;
+    }
+
     loadHistory();
 
     // Subscribe to realtime updates
@@ -42,13 +52,14 @@ const HistoryPanel = ({ onSelectAnalysis }: HistoryPanelProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id, externalAnalyses]);
 
   const handleOutcomeUpdate = async (id: string, outcome: 'WIN' | 'LOSS' | 'PENDING') => {
     try {
       await updateAnalysisOutcome(id, outcome);
       setActiveMenu(null);
       loadHistory();
+      onRefresh?.();
     } catch (error) {
       console.error("Failed to update outcome:", error);
     }
@@ -117,7 +128,7 @@ const HistoryPanel = ({ onSelectAnalysis }: HistoryPanelProps) => {
           ))
         ) : history.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            No analyses yet. Upload a chart to get started!
+            {user ? "No analyses yet. Upload a chart to get started!" : "Sign in to save your analysis history"}
           </div>
         ) : (
           history.map((item) => (
