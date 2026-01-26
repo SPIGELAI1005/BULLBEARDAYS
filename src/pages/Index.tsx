@@ -425,26 +425,10 @@ const Index = () => {
           </button>
         </div>
 
-        {/* Main Chat Section - Full Width */}
-        {isChatMode && (
-          <div className="mb-8">
-            <div className="glass-panel p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">AI Chart Analysis</h2>
-              </div>
-              <ChatInput
-                onSubmit={handleChatSubmit}
-                isLoading={isAnalyzing}
-                placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
-              />
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          {/* Left Column - Upload & Models (when not in chat mode) */}
-          <div className="space-y-6">
+          {/* Left Column - Upload & Models + Results (spans 2 columns) */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Mode Toggle - Chat / Single / Multi */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/30 border border-border/30">
               <button
@@ -482,57 +466,72 @@ const Index = () => {
               </button>
             </div>
 
-            {/* Non-chat upload modes */}
-            {!isChatMode && (
-              <>
-                {isMultiChartMode ? (
-                  <MultiChartUpload
-                    onImagesUpload={handleMultiImagesUpload}
-                    uploadedImages={uploadedImages}
-                    onClearAll={handleClearAllImages}
-                    onClearOne={handleClearOneImage}
-                  />
-                ) : (
-                  <ChartUpload
-                    onImageUpload={handleImageUpload}
-                    uploadedImage={uploadedImage}
-                    onClear={handleClearImage}
-                  />
-                )}
-                
-                <div className="ai-model-selector">
-                  <AIModelSelector
-                    selectedModels={selectedModels}
-                    referenceModel={referenceModel}
-                    onToggleModel={handleToggleModel}
-                    onSetReference={handleSetReference}
-                  />
+            {/* Chat Mode Input */}
+            {isChatMode && (
+              <div className="glass-panel p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">AI Chart Analysis</h2>
                 </div>
-                
-                <div className="analyze-button">
-                  <AnalyzeButton
-                    onClick={handleAnalyze}
-                    disabled={!canAnalyze}
-                    isLoading={isAnalyzing}
-                  />
-                </div>
-              </>
+                <ChatInput
+                  onSubmit={handleChatSubmit}
+                  isLoading={isAnalyzing}
+                  placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
+                />
+              </div>
             )}
 
-            {/* Analysis Results */}
-            <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+            {/* Non-chat upload modes */}
+            {!isChatMode && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  {isMultiChartMode ? (
+                    <MultiChartUpload
+                      onImagesUpload={handleMultiImagesUpload}
+                      uploadedImages={uploadedImages}
+                      onClearAll={handleClearAllImages}
+                      onClearOne={handleClearOneImage}
+                    />
+                  ) : (
+                    <ChartUpload
+                      onImageUpload={handleImageUpload}
+                      uploadedImage={uploadedImage}
+                      onClear={handleClearImage}
+                    />
+                  )}
+                  
+                  <div className="ai-model-selector">
+                    <AIModelSelector
+                      selectedModels={selectedModels}
+                      referenceModel={referenceModel}
+                      onToggleModel={handleToggleModel}
+                      onSetReference={handleSetReference}
+                    />
+                  </div>
+                  
+                  <div className="analyze-button">
+                    <AnalyzeButton
+                      onClick={handleAnalyze}
+                      disabled={!canAnalyze}
+                      isLoading={isAnalyzing}
+                    />
+                  </div>
+                </div>
+
+                {/* Analysis Results - side by side on larger screens */}
+                <div>
+                  <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+                </div>
+              </div>
+            )}
+
+            {/* Analysis Results for Chat Mode */}
+            {isChatMode && (
+              <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+            )}
           </div>
 
-          {/* Middle Column - Watchlist & Price Alerts (side by side in a 2-row layout) */}
-          <div className="space-y-6">
-            {/* Watchlist */}
-            <WatchlistPanel />
-            
-            {/* Price Alerts */}
-            <PriceAlerts />
-          </div>
-
-          {/* Right Column - History & Leaderboard */}
+          {/* Right Column - History, Watchlist, Price Alerts, Leaderboard */}
           <div className="space-y-6">
             <div className="history-panel">
               <HistoryPanel 
@@ -541,6 +540,12 @@ const Index = () => {
                 onRefresh={loadAllAnalyses}
               />
             </div>
+            
+            {/* Watchlist */}
+            <WatchlistPanel />
+            
+            {/* Price Alerts */}
+            <PriceAlerts />
             
             {/* Leaderboard */}
             <Leaderboard />
