@@ -65,10 +65,12 @@ const CandlestickBackground = () => {
       const bearishHsl = styles.getPropertyValue("--bearish").trim();
 
       // More vibrant green/red colors for candlesticks
-      const bullishColor = `hsla(${bullishHsl}, 0.35)`;
-      const bearishColor = `hsla(${bearishHsl}, 0.35)`;
-      const wickBullish = `hsla(${bullishHsl}, 0.25)`;
-      const wickBearish = `hsla(${bearishHsl}, 0.25)`;
+      const bullishColor = `hsla(${bullishHsl}, 0.4)`;
+      const bearishColor = `hsla(${bearishHsl}, 0.4)`;
+      const wickBullish = `hsla(${bullishHsl}, 0.3)`;
+      const wickBearish = `hsla(${bearishHsl}, 0.3)`;
+      const glowBullish = `hsla(${bullishHsl}, 0.6)`;
+      const glowBearish = `hsla(${bearishHsl}, 0.6)`;
 
       const candles = candlesRef.current;
 
@@ -90,6 +92,7 @@ const CandlestickBackground = () => {
         const isBullish = candle.close >= candle.open;
         const bodyColor = isBullish ? bullishColor : bearishColor;
         const wickColor = isBullish ? wickBullish : wickBearish;
+        const glowColor = isBullish ? glowBullish : glowBearish;
 
         // Scale to canvas height
         const scale = canvas.height / 100;
@@ -98,19 +101,26 @@ const CandlestickBackground = () => {
         const openY = canvas.height - candle.open * scale;
         const closeY = canvas.height - candle.close * scale;
 
-        // Draw wick
+        // Set glow effect
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 12;
+
+        // Draw wick with glow
         ctx.beginPath();
         ctx.strokeStyle = wickColor;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         ctx.moveTo(candle.x + candleWidth / 2, highY);
         ctx.lineTo(candle.x + candleWidth / 2, lowY);
         ctx.stroke();
 
-        // Draw body
+        // Draw body with glow
         ctx.fillStyle = bodyColor;
         const bodyTop = Math.min(openY, closeY);
         const bodyHeight = Math.abs(closeY - openY) || 2;
         ctx.fillRect(candle.x, bodyTop, candleWidth, bodyHeight);
+
+        // Reset shadow for next iteration
+        ctx.shadowBlur = 0;
       });
 
       animationRef.current = requestAnimationFrame(animate);
