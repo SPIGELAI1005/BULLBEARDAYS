@@ -64,10 +64,11 @@ const CandlestickBackground = () => {
       const bullishHsl = styles.getPropertyValue("--bullish").trim();
       const bearishHsl = styles.getPropertyValue("--bearish").trim();
 
-      const bullishColor = `hsla(${bullishHsl}, 0.12)`;
-      const bearishColor = `hsla(${bearishHsl}, 0.12)`;
-      const wickBullish = `hsla(${bullishHsl}, 0.08)`;
-      const wickBearish = `hsla(${bearishHsl}, 0.08)`;
+      // More vibrant green/red colors for candlesticks
+      const bullishColor = `hsla(${bullishHsl}, 0.35)`;
+      const bearishColor = `hsla(${bearishHsl}, 0.35)`;
+      const wickBullish = `hsla(${bullishHsl}, 0.25)`;
+      const wickBearish = `hsla(${bearishHsl}, 0.25)`;
 
       const candles = candlesRef.current;
 
