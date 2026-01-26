@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, Target, Shield, Percent, Brain, AlertTriangle, CheckCircle2 } from "lucide-react";
 import PriceTargets from "./PriceTargets";
 import QuickActions from "./QuickActions";
+import TradingStrategySelector, { TradingStrategy } from "./TradingStrategySelector";
 
 interface PriceTarget {
   price: number;
@@ -43,9 +44,11 @@ interface AnalysisData {
 interface AnalysisResultsProps {
   analysis: AnalysisData | null;
   isLoading: boolean;
+  tradingStrategy?: TradingStrategy;
+  onStrategyChange?: (strategy: TradingStrategy) => void;
 }
 
-const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
+const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader', onStrategyChange }: AnalysisResultsProps) => {
   if (isLoading) {
     return (
       <div className="glass-trading p-8">
@@ -176,6 +179,16 @@ const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
         />
       </div>
 
+      {/* Trading Strategy Selector */}
+      {onStrategyChange && (
+        <div className="mb-6">
+          <TradingStrategySelector
+            selectedStrategy={tradingStrategy}
+            onStrategyChange={onStrategyChange}
+          />
+        </div>
+      )}
+
       {/* Price Targets & Confidence Intervals */}
       {(analysis.priceTargets || analysis.confidenceIntervals) && (
         <div className="mb-6">
@@ -184,6 +197,7 @@ const AnalysisResults = ({ analysis, isLoading }: AnalysisResultsProps) => {
             priceTargets={analysis.priceTargets}
             confidenceIntervals={analysis.confidenceIntervals}
             signal={analysis.signal}
+            tradingStrategy={tradingStrategy}
           />
         </div>
       )}

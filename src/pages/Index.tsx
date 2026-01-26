@@ -24,6 +24,7 @@ import Leaderboard from "@/components/Leaderboard";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
 import CandlestickBackground from "@/components/CandlestickBackground";
+import TradingStrategySelector, { TradingStrategy } from "@/components/TradingStrategySelector";
 import { analyzeChart, analyzeMarketData, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord, MarketDataItem, fetchMarketData } from "@/lib/api";
 import { uploadChartImage } from "@/lib/chartStorage";
 import MarketComparison from "@/components/MarketComparison";
@@ -88,6 +89,7 @@ const Index = () => {
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [marketAssets, setMarketAssets] = useState<MarketDataItem[]>([]);
+  const [tradingStrategy, setTradingStrategy] = useState<TradingStrategy>('swingTrader');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcuts
@@ -514,14 +516,24 @@ const Index = () => {
 
                 {/* Analysis Results - side by side on larger screens */}
                 <div>
-                  <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+                  <AnalysisResults 
+                    analysis={analysis} 
+                    isLoading={isAnalyzing}
+                    tradingStrategy={tradingStrategy}
+                    onStrategyChange={setTradingStrategy}
+                  />
                 </div>
               </div>
             )}
 
             {/* Analysis Results for Chat Mode */}
             {isChatMode && (
-              <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+              <AnalysisResults 
+                analysis={analysis} 
+                isLoading={isAnalyzing}
+                tradingStrategy={tradingStrategy}
+                onStrategyChange={setTradingStrategy}
+              />
             )}
           </div>
 
