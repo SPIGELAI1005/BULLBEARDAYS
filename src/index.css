@@ -330,6 +330,17 @@
     animation: liquid-flow 8s ease-in-out infinite;
   }
 
+  /* Signal pulsing borders */
+  .signal-pulse-bullish {
+    animation: pulse-border-bullish 2s ease-in-out infinite;
+    border-color: hsl(var(--bullish) / 0.5);
+  }
+
+  .signal-pulse-bearish {
+    animation: pulse-border-bearish 2s ease-in-out infinite;
+    border-color: hsl(var(--bearish) / 0.5);
+  }
+
   .glow-bullish {
     box-shadow: 0 0 40px -10px hsl(var(--bullish) / 0.5);
   }
@@ -483,6 +494,28 @@
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+  }
+
+  @keyframes pulse-border-bullish {
+    0%, 100% { 
+      border-color: hsl(var(--bullish) / 0.3);
+      box-shadow: 0 0 20px -5px hsl(var(--bullish) / 0.2);
+    }
+    50% { 
+      border-color: hsl(var(--bullish) / 0.7);
+      box-shadow: 0 0 30px -5px hsl(var(--bullish) / 0.4);
+    }
+  }
+
+  @keyframes pulse-border-bearish {
+    0%, 100% { 
+      border-color: hsl(var(--bearish) / 0.3);
+      box-shadow: 0 0 20px -5px hsl(var(--bearish) / 0.2);
+    }
+    50% { 
+      border-color: hsl(var(--bearish) / 0.7);
+      box-shadow: 0 0 30px -5px hsl(var(--bearish) / 0.4);
+    }
   }
 
   .bg-gradient-radial {
