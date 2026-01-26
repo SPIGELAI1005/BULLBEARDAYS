@@ -27,54 +27,47 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Please sign in to access market data' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    // Use anon key with user's auth header to validate the token
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid session' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const userId = claimsData.claims.sub;
-    console.log('Authenticated user:', userId);
-
-    // Use service role for cache and rate limit operations
+    // Use service role for cache operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Rate limiting check (60 market data requests per minute)
-    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
-      p_user_id: userId,
-      p_endpoint: 'market-data',
-      p_max_requests: 60,
-      p_window_minutes: 1
-    });
+    // Optional authentication - rate limit authenticated users
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+    
+    if (authHeader?.startsWith('Bearer ')) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
 
-    if (!rateLimitOk) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData } = await supabaseAuth.auth.getClaims(token);
+      
+      if (claimsData?.claims?.sub) {
+        userId = claimsData.claims.sub as string;
+        console.log('Authenticated user:', userId);
+
+        // Rate limiting for authenticated users (60 market data requests per minute)
+        const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+          p_user_id: userId,
+          p_endpoint: 'market-data',
+          p_max_requests: 60,
+          p_window_minutes: 1
+        });
+
+        if (!rateLimitOk) {
+          return new Response(
+            JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
     }
+    
+    console.log('Fetching market data for', userId ? 'authenticated user' : 'anonymous user');
 
     // Check cache first
     const { data: cachedData } = await supabase
