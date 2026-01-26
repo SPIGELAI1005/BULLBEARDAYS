@@ -1,4 +1,5 @@
 import { Target, TrendingUp, AlertTriangle, Crosshair } from "lucide-react";
+import { TradingStrategy, TRADING_STRATEGIES } from "./TradingStrategySelector";
 
 interface PriceTarget {
   price: number;
@@ -24,9 +25,10 @@ interface PriceTargetsProps {
     long?: ConfidenceInterval;
   };
   signal: "BUY" | "SELL" | "HOLD";
+  tradingStrategy?: TradingStrategy;
 }
 
-const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal }: PriceTargetsProps) => {
+const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal, tradingStrategy = 'swingTrader' }: PriceTargetsProps) => {
   if (!priceTargets && !confidenceIntervals) return null;
 
   const formatPrice = (price: number) => {
@@ -43,6 +45,10 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal 
   };
 
   const isBullish = signal === "BUY";
+  
+  // Get timeframe labels based on trading strategy
+  const strategyConfig = TRADING_STRATEGIES.find(s => s.id === tradingStrategy) || TRADING_STRATEGIES[2];
+  const timeframeLabels = strategyConfig.timeframes;
 
   return (
     <div className="space-y-4">
@@ -119,7 +125,7 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal 
           <div className="space-y-3">
             {confidenceIntervals.short && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-10">{confidenceIntervals.short.timeframe}</span>
+                <span className="text-xs text-muted-foreground w-12">{timeframeLabels.short.label}</span>
                 <div className="flex-1 relative h-6 rounded-lg bg-muted/30 overflow-hidden">
                   {currentPrice && (
                     <>
@@ -146,7 +152,7 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal 
             )}
             {confidenceIntervals.medium && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-10">{confidenceIntervals.medium.timeframe}</span>
+                <span className="text-xs text-muted-foreground w-12">{timeframeLabels.medium.label}</span>
                 <div className="flex-1 relative h-6 rounded-lg bg-muted/30 overflow-hidden">
                   {currentPrice && (
                     <>
@@ -173,7 +179,7 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal 
             )}
             {confidenceIntervals.long && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-10">{confidenceIntervals.long.timeframe}</span>
+                <span className="text-xs text-muted-foreground w-12">{timeframeLabels.long.label}</span>
                 <div className="flex-1 relative h-6 rounded-lg bg-muted/30 overflow-hidden">
                   {currentPrice && (
                     <>
