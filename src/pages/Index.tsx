@@ -414,16 +414,10 @@ const Index = () => {
 
       <main id="analyze" className="max-w-7xl mx-auto px-6 pb-20">
         {/* Market Ticker with Comparison Button */}
-        <div className="relative">
-          <MarketTicker onSelectAsset={handleMarketAssetClick} />
-          <button
-            onClick={() => setShowComparison(true)}
-            className="absolute top-4 right-14 flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/30"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Compare
-          </button>
-        </div>
+        <MarketTicker 
+          onSelectAsset={handleMarketAssetClick} 
+          onCompareClick={() => setShowComparison(true)}
+        />
 
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
