@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { BarChart3, TrendingUp, Download, Target, Award, Zap, FileText } from "lucide-react";
+import { BarChart3, TrendingUp, Download, Target, Award, Zap, FileText, Printer } from "lucide-react";
 import { AnalysisRecord } from "@/lib/api";
-import { exportToCSV, generatePerformanceReport } from "@/lib/exportUtils";
+import { exportToCSV, generatePerformanceReport, generatePDFReport } from "@/lib/exportUtils";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,6 +39,22 @@ const PerformanceDashboard = ({ analyses }: PerformanceDashboardProps) => {
       toast({
         title: "Export Failed",
         description: error instanceof Error ? error.message : "Failed to generate report",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      generatePDFReport(analyses);
+      toast({
+        title: "PDF Report",
+        description: "Opening print dialog for PDF export",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to generate PDF",
         variant: "destructive",
       });
     }
@@ -152,7 +168,7 @@ const PerformanceDashboard = ({ analyses }: PerformanceDashboardProps) => {
   return (
     <div className="space-y-6">
       {/* Export Buttons */}
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 flex-wrap">
         <button
           onClick={handleExportCSV}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-colors"
@@ -162,10 +178,17 @@ const PerformanceDashboard = ({ analyses }: PerformanceDashboardProps) => {
         </button>
         <button
           onClick={handleExportReport}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm font-medium transition-colors"
         >
           <FileText className="w-4 h-4" />
-          Performance Report
+          Text Report
+        </button>
+        <button
+          onClick={handleExportPDF}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
+        >
+          <Printer className="w-4 h-4" />
+          PDF Report
         </button>
       </div>
 

@@ -10,6 +10,7 @@ interface Profile {
   preferred_model: string | null;
   theme_preference: string | null;
   accent_preference: string | null;
+  leaderboard_opt_in: boolean | null;
   created_at: string;
   updated_at: string;
 }
