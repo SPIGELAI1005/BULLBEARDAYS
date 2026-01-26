@@ -4,6 +4,7 @@ import { fetchMarketData, MarketDataItem, MarketCategory } from "@/lib/api";
 
 interface MarketTickerProps {
   onSelectAsset?: (asset: MarketDataItem) => void;
+  onCompareClick?: () => void;
 }
 
 const CATEGORIES: { id: MarketCategory; label: string; icon: React.ReactNode }[] = [
@@ -13,7 +14,7 @@ const CATEGORIES: { id: MarketCategory; label: string; icon: React.ReactNode }[]
   { id: 'stocks', label: 'Stocks', icon: <Building2 className="w-4 h-4" /> },
 ];
 
-const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
+const MarketTicker = ({ onSelectAsset, onCompareClick }: MarketTickerProps) => {
   const [marketData, setMarketData] = useState<MarketDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -96,9 +97,19 @@ const MarketTicker = ({ onSelectAsset }: MarketTickerProps) => {
             </button>
           ))}
           <div className="w-px h-4 bg-border/50 mx-1" />
+          {onCompareClick && (
+            <button
+              onClick={onCompareClick}
+              title="Compare Markets"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={loadMarketData}
             disabled={isLoading}
+            title="Refresh"
             className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
           >
             <RefreshCw className={`w-4 h-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
