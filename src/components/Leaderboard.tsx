@@ -32,59 +32,23 @@ const Leaderboard = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      // Get all analyses with outcomes, grouped by user
-      const { data: analyses, error } = await supabase
-        .from("analyses")
-        .select("user_id, outcome")
-        .in("outcome", ["WIN", "LOSS"])
-        .not("user_id", "is", null);
+      // Use secure database function that aggregates stats server-side
+      // Only returns data for users who have opted in to the leaderboard
+      const { data, error } = await supabase.rpc("get_leaderboard_stats");
 
       if (error) throw error;
 
-      // Get profiles of users who opted in
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, leaderboard_opt_in")
-        .eq("leaderboard_opt_in", true);
-
-      if (profileError) throw profileError;
-
-      const optedInUserIds = new Set(profiles?.map(p => p.user_id) || []);
-      
-      // Calculate stats for opted-in users
-      const userStats: Record<string, { wins: number; losses: number; display_name: string }> = {};
-      
-      analyses?.forEach(a => {
-        if (!a.user_id || !optedInUserIds.has(a.user_id)) return;
-        
-        if (!userStats[a.user_id]) {
-          const profile = profiles?.find(p => p.user_id === a.user_id);
-          userStats[a.user_id] = {
-            wins: 0,
-            losses: 0,
-            display_name: profile?.display_name || "Anonymous Trader"
-          };
-        }
-        
-        if (a.outcome === "WIN") userStats[a.user_id].wins++;
-        if (a.outcome === "LOSS") userStats[a.user_id].losses++;
-      });
-
-      // Convert to leaderboard entries
-      const leaderboard: LeaderboardEntry[] = Object.entries(userStats)
-        .map(([user_id, stats]) => ({
-          user_id,
-          display_name: stats.display_name,
-          win_count: stats.wins,
-          loss_count: stats.losses,
-          total_trades: stats.wins + stats.losses,
-          win_rate: stats.wins + stats.losses > 0 
-            ? (stats.wins / (stats.wins + stats.losses)) * 100 
-            : 0
-        }))
-        .filter(e => e.total_trades >= 5) // Min 5 trades to appear
-        .sort((a, b) => b.win_rate - a.win_rate)
-        .slice(0, 10);
+      // Convert to leaderboard entries with calculated fields
+      const leaderboard: LeaderboardEntry[] = (data || []).map((entry: any) => ({
+        user_id: entry.user_id,
+        display_name: entry.display_name || "Anonymous Trader",
+        win_count: Number(entry.win_count) || 0,
+        loss_count: Number(entry.loss_count) || 0,
+        total_trades: (Number(entry.win_count) || 0) + (Number(entry.loss_count) || 0),
+        win_rate: (Number(entry.win_count) || 0) + (Number(entry.loss_count) || 0) > 0
+          ? ((Number(entry.win_count) || 0) / ((Number(entry.win_count) || 0) + (Number(entry.loss_count) || 0))) * 100
+          : 0
+      }));
 
       setEntries(leaderboard);
     } catch (error) {
