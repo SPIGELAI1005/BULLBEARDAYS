@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import bullbearLogo from "@/assets/bullbear-logo.png";
+import bullbearLogo from "@/assets/bullbeardays-logo.png";
 
 const AnimatedLogo = () => {
   const [timeOfDay, setTimeOfDay] = useState<"sunrise" | "day" | "sunset" | "night">("day");
