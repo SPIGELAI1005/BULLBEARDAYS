@@ -1,13 +1,49 @@
 import { useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Target, Award, Zap } from "lucide-react";
+import { BarChart3, TrendingUp, Download, Target, Award, Zap, FileText } from "lucide-react";
 import { AnalysisRecord } from "@/lib/api";
+import { exportToCSV, generatePerformanceReport } from "@/lib/exportUtils";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 interface PerformanceDashboardProps {
   analyses: AnalysisRecord[];
 }
 
 const PerformanceDashboard = ({ analyses }: PerformanceDashboardProps) => {
+  const { toast } = useToast();
+  
+  const handleExportCSV = () => {
+    try {
+      exportToCSV(analyses, "trading-history");
+      toast({
+        title: "Export Complete",
+        description: "Trading history downloaded as CSV",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to export data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportReport = () => {
+    try {
+      generatePerformanceReport(analyses);
+      toast({
+        title: "Report Generated",
+        description: "Performance report downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to generate report",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const stats = useMemo(() => {
     const completedTrades = analyses.filter(a => a.outcome === 'WIN' || a.outcome === 'LOSS');
     const wins = analyses.filter(a => a.outcome === 'WIN').length;
@@ -115,6 +151,24 @@ const PerformanceDashboard = ({ analyses }: PerformanceDashboardProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Export Buttons */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={handleExportCSV}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+        <button
+          onClick={handleExportReport}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
+        >
+          <FileText className="w-4 h-4" />
+          Performance Report
+        </button>
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-panel-subtle p-4 text-center">
