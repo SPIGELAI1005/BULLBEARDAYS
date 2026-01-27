@@ -24,49 +24,17 @@ import Leaderboard from "@/components/Leaderboard";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
 import CandlestickBackground from "@/components/CandlestickBackground";
-import TradingStrategySelector, { TradingStrategy } from "@/components/TradingStrategySelector";
+import TradingStrategySelector from "@/components/TradingStrategySelector";
+import InstrumentSelector from "@/components/InstrumentSelector";
+import TimeframeSelector from "@/components/TimeframeSelector";
+import Footer from "@/components/Footer";
 import { analyzeChart, analyzeMarketData, saveAnalysis, getAnalysisHistory, AnalysisResult, AnalysisRecord, MarketDataItem, fetchMarketData } from "@/lib/api";
+import { UnifiedAnalysis, TradingStrategy, isScenarioAnalysis, isLegacyAnalysis } from "@/lib/types";
 import { uploadChartImage } from "@/lib/chartStorage";
 import MarketComparison from "@/components/MarketComparison";
 import { Layers, Grid2X2, MessageSquare, BarChart3 } from "lucide-react";
 
-interface PriceTarget {
-  price: number;
-  confidence: number;
-}
-
-interface ConfidenceInterval {
-  low: number;
-  high: number;
-  timeframe: string;
-}
-
-interface AnalysisData {
-  signal: "BUY" | "SELL" | "HOLD";
-  probability: number;
-  takeProfit: string;
-  stopLoss: string;
-  riskReward: string;
-  reasoning: {
-    bullish: string[];
-    bearish: string[];
-  };
-  chartAnalysis: string;
-  marketSentiment: string;
-  aiModel: string;
-  detectedAsset?: string;
-  currentPrice?: number;
-  priceTargets?: {
-    conservative?: PriceTarget;
-    moderate?: PriceTarget;
-    aggressive?: PriceTarget;
-  };
-  confidenceIntervals?: {
-    short?: ConfidenceInterval;
-    medium?: ConfidenceInterval;
-    long?: ConfidenceInterval;
-  };
-}
+// Types now imported from @/lib/types for consistency
 
 const Index = () => {
   const { toast } = useToast();
@@ -82,7 +50,7 @@ const Index = () => {
   const [selectedModels, setSelectedModels] = useState<string[]>(["gemini"]);
   const [referenceModel, setReferenceModel] = useState("gemini");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  const [analysis, setAnalysis] = useState<UnifiedAnalysis | null>(null);
   const [allAnalyses, setAllAnalyses] = useState<AnalysisRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<AnalysisRecord | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -90,6 +58,8 @@ const Index = () => {
   const [showComparison, setShowComparison] = useState(false);
   const [marketAssets, setMarketAssets] = useState<MarketDataItem[]>([]);
   const [tradingStrategy, setTradingStrategy] = useState<TradingStrategy>('swingTrader');
+  const [selectedInstrument, setSelectedInstrument] = useState<string | undefined>(undefined);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1D');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcuts
@@ -170,48 +140,48 @@ const Index = () => {
     setAnalysis(null);
 
     try {
-      const result = await analyzeChart(images[0], selectedModels, referenceModel);
-      
-      const analysisData: AnalysisData = {
-        signal: result.signal,
-        probability: result.probability,
-        takeProfit: result.takeProfit,
-        stopLoss: result.stopLoss,
-        riskReward: result.riskReward,
-        reasoning: {
-          bullish: result.bullishReasons || [],
-          bearish: result.bearishReasons || [],
-        },
-        chartAnalysis: result.chartAnalysis,
-        marketSentiment: result.marketSentiment,
-        aiModel: result.aiModel,
-      };
+      // Pass user selections to API (Phase 1 first-class inputs)
+      const result = await analyzeChart(images[0], selectedModels, referenceModel, {
+        strategy: tradingStrategy,
+        timeframe: selectedTimeframe,
+        instrument: selectedInstrument,
+      });
 
-      setAnalysis(analysisData);
+      // Result is UnifiedAnalysis
+      setAnalysis(result);
 
       if (user) {
         try {
           let chartImageUrl: string | undefined;
           const url = await uploadChartImage(images[0], user.id);
           if (url) chartImageUrl = url;
-          
+
           await saveAnalysis(result, chartImageUrl, message || undefined, user.id);
           await loadAllAnalyses();
+
+          const displayMessage = isScenarioAnalysis(result)
+            ? `${result.trendBias} bias with ${result.confidenceScore}% confidence`
+            : `${result.signal} signal with ${result.probability}% confidence`;
+
           toast({
             title: "Analysis Complete",
-            description: `${result.signal} signal with ${result.probability}% confidence`,
+            description: displayMessage,
           });
         } catch (saveError) {
           console.error("Failed to save analysis:", saveError);
           toast({
             title: "Analysis Complete",
-            description: `${result.signal} signal (not saved - sign in to save)`,
+            description: "Analysis complete (not saved - sign in to save)",
           });
         }
       } else {
+        const displayMessage = isScenarioAnalysis(result)
+          ? `${result.trendBias} bias - Sign in to save your history`
+          : `${result.signal} signal - Sign in to save your history`;
+
         toast({
           title: "Analysis Complete",
-          description: `${result.signal} signal - Sign in to save your history`,
+          description: displayMessage,
         });
       }
     } catch (error) {
@@ -252,24 +222,15 @@ const Index = () => {
     setAnalysis(null);
 
     try {
-      const result = await analyzeChart(imageToAnalyze, selectedModels, referenceModel);
-      
-      const analysisData: AnalysisData = {
-        signal: result.signal,
-        probability: result.probability,
-        takeProfit: result.takeProfit,
-        stopLoss: result.stopLoss,
-        riskReward: result.riskReward,
-        reasoning: {
-          bullish: result.bullishReasons || [],
-          bearish: result.bearishReasons || [],
-        },
-        chartAnalysis: result.chartAnalysis,
-        marketSentiment: result.marketSentiment,
-        aiModel: result.aiModel,
-      };
+      // Pass user selections to API (Phase 1 first-class inputs)
+      const result = await analyzeChart(imageToAnalyze, selectedModels, referenceModel, {
+        strategy: tradingStrategy,
+        timeframe: selectedTimeframe,
+        instrument: selectedInstrument,
+      });
 
-      setAnalysis(analysisData);
+      // Result is UnifiedAnalysis - can be ScenarioAnalysis or LegacyAnalysis
+      setAnalysis(result);
 
       if (user) {
         try {
@@ -279,24 +240,34 @@ const Index = () => {
             const url = await uploadChartImage(imageToAnalyze, user.id);
             if (url) chartImageUrl = url;
           }
-          
+
           await saveAnalysis(result, chartImageUrl, undefined, user.id);
           await loadAllAnalyses();
+
+          // Display appropriate toast based on format
+          const displayMessage = isScenarioAnalysis(result)
+            ? `${result.trendBias} bias with ${result.confidenceScore}% confidence`
+            : `${result.signal} signal with ${result.probability}% confidence`;
+
           toast({
             title: "Analysis Complete",
-            description: `${result.signal} signal with ${result.probability}% confidence`,
+            description: displayMessage,
           });
         } catch (saveError) {
           console.error("Failed to save analysis:", saveError);
           toast({
             title: "Analysis Complete",
-            description: `${result.signal} signal (not saved - sign in to save)`,
+            description: "Analysis complete (not saved - please sign in to save)",
           });
         }
       } else {
+        const displayMessage = isScenarioAnalysis(result)
+          ? `${result.trendBias} bias - Sign in to save your history`
+          : `${result.signal} signal - Sign in to save your history`;
+
         toast({
           title: "Analysis Complete",
-          description: `${result.signal} signal - Sign in to save your history`,
+          description: displayMessage,
         });
       }
     } catch (error) {
@@ -333,31 +304,17 @@ const Index = () => {
 
     try {
       const result = await analyzeMarketData(asset);
-      
-      const analysisData: AnalysisData = {
-        signal: result.signal,
-        probability: result.probability,
-        takeProfit: result.takeProfit,
-        stopLoss: result.stopLoss,
-        riskReward: result.riskReward,
-        reasoning: {
-          bullish: result.bullishReasons || [],
-          bearish: result.bearishReasons || [],
-        },
-        chartAnalysis: result.chartAnalysis,
-        marketSentiment: result.marketSentiment,
-        aiModel: result.aiModel,
-        detectedAsset: result.detectedAsset || asset.symbol,
-        currentPrice: asset.price,
-        priceTargets: result.priceTargets,
-        confidenceIntervals: result.confidenceIntervals,
-      };
 
-      setAnalysis(analysisData);
+      // Result is UnifiedAnalysis
+      setAnalysis(result);
+
+      const displayMessage = isScenarioAnalysis(result)
+        ? `${result.trendBias} bias with ${result.confidenceScore}% confidence`
+        : `${result.signal} signal with ${result.probability}% confidence`;
 
       toast({
         title: `${asset.symbol} Analysis Complete`,
-        description: `${result.signal} signal with ${result.probability}% confidence`,
+        description: displayMessage,
       });
 
       // Optionally save to history if user is logged in
@@ -414,7 +371,7 @@ const Index = () => {
         }}
       />
 
-      <main id="analyze" className="max-w-7xl mx-auto px-6 pb-20">
+      <main id="analyze" className="max-w-7xl mx-auto px-6 pt-8 pb-20">
         {/* Market Ticker with Comparison Button */}
         <MarketTicker 
           onSelectAsset={handleMarketAssetClick} 
@@ -464,17 +421,38 @@ const Index = () => {
 
             {/* Chat Mode Input */}
             {isChatMode && (
-              <div className="glass-panel p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <MessageSquare className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-semibold text-foreground">AI Chart Analysis</h2>
+              <>
+                <div className="glass-panel p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <h2 className="text-lg font-semibold text-foreground">AI Chart Analysis</h2>
+                  </div>
+                  <ChatInput
+                    onSubmit={handleChatSubmit}
+                    isLoading={isAnalyzing}
+                    placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
+                  />
                 </div>
-                <ChatInput
-                  onSubmit={handleChatSubmit}
-                  isLoading={isAnalyzing}
-                  placeholder="Paste a chart image (Ctrl+V) or describe your setup..."
-                />
-              </div>
+
+                {/* Phase 1: Optional Context Inputs for Chat Mode */}
+                <div className="glass-panel p-4 space-y-4">
+                  <div className="text-sm text-muted-foreground mb-3">
+                    Optional: Provide context for better analysis
+                  </div>
+                  <TimeframeSelector
+                    selectedTimeframe={selectedTimeframe}
+                    onTimeframeChange={setSelectedTimeframe}
+                    strategy={tradingStrategy}
+                    compact={true}
+                  />
+                  <div className="text-xs text-muted-foreground mb-2">Instrument (AI will also detect)</div>
+                  <InstrumentSelector
+                    selectedInstrument={selectedInstrument}
+                    onInstrumentChange={setSelectedInstrument}
+                    marketData={marketAssets}
+                  />
+                </div>
+              </>
             )}
 
             {/* Non-chat upload modes */}
@@ -504,7 +482,25 @@ const Index = () => {
                       onSetReference={handleSetReference}
                     />
                   </div>
-                  
+
+                  {/* Phase 1: First-Class Inputs */}
+                  <div className="glass-panel p-4 space-y-4">
+                    <InstrumentSelector
+                      selectedInstrument={selectedInstrument}
+                      onInstrumentChange={setSelectedInstrument}
+                      marketData={marketAssets}
+                    />
+                  </div>
+
+                  <div className="glass-panel p-4">
+                    <TimeframeSelector
+                      selectedTimeframe={selectedTimeframe}
+                      onTimeframeChange={setSelectedTimeframe}
+                      strategy={tradingStrategy}
+                      compact={false}
+                    />
+                  </div>
+
                   <div className="analyze-button">
                     <AnalyzeButton
                       onClick={handleAnalyze}
@@ -574,22 +570,7 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div>© 2026 BullBearDays. AI-powered trading analysis.</div>
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => setShowShortcutsHelp(true)}
-              className="text-xs hover:text-foreground transition-colors"
-            >
-              Keyboard Shortcuts (?)
-            </button>
-            <span className="text-xs">
-              Not financial advice. Trade responsibly.
-            </span>
-          </div>
-        </div>
-      </footer>
+      <Footer onShortcutsClick={() => setShowShortcutsHelp(true)} />
 
       {/* Modals & Overlays */}
       <AnalysisDetailModal

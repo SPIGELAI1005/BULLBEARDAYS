@@ -9,7 +9,17 @@ interface Candle {
   velocity: number;
 }
 
-const CandlestickBackground = () => {
+interface CandlestickBackgroundProps {
+  tone?: "default" | "black";
+  className?: string;
+  opacity?: number;
+}
+
+const CandlestickBackground = ({
+  tone = "default",
+  className = "",
+  opacity = 0.85,
+}: CandlestickBackgroundProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const candlesRef = useRef<Candle[]>([]);
   const animationRef = useRef<number>();
@@ -80,6 +90,10 @@ const CandlestickBackground = () => {
       const glowBullish = toHsla(bullishHsl, 0.85);
       const glowBearish = toHsla(bearishHsl, 0.85);
 
+      const neutralBody = "rgba(0, 0, 0, 0.55)";
+      const neutralWick = "rgba(0, 0, 0, 0.45)";
+      const neutralGlow = "rgba(0, 0, 0, 0.75)";
+
       const candles = candlesRef.current;
 
       candles.forEach((candle) => {
@@ -98,9 +112,15 @@ const CandlestickBackground = () => {
         }
 
         const isBullish = candle.close >= candle.open;
-        const bodyColor = isBullish ? bullishColor : bearishColor;
-        const wickColor = isBullish ? wickBullish : wickBearish;
-        const glowColor = isBullish ? glowBullish : glowBearish;
+        const bodyColor = tone === "black"
+          ? neutralBody
+          : (isBullish ? bullishColor : bearishColor);
+        const wickColor = tone === "black"
+          ? neutralWick
+          : (isBullish ? wickBullish : wickBearish);
+        const glowColor = tone === "black"
+          ? neutralGlow
+          : (isBullish ? glowBullish : glowBearish);
 
         // Scale to canvas height
         const scale = canvas.height / 100;
@@ -147,8 +167,8 @@ const CandlestickBackground = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.85 }}
+      className={`fixed inset-0 pointer-events-none z-0 ${className}`}
+      style={{ opacity }}
     />
   );
 };

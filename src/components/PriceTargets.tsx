@@ -1,5 +1,6 @@
 import { Target, TrendingUp, AlertTriangle, Crosshair } from "lucide-react";
 import { TradingStrategy, TRADING_STRATEGIES } from "./TradingStrategySelector";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface PriceTarget {
   price: number;
@@ -29,14 +30,9 @@ interface PriceTargetsProps {
 }
 
 const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal, tradingStrategy = 'swingTrader' }: PriceTargetsProps) => {
+  const { formatConverted } = useCurrency();
+  
   if (!priceTargets && !confidenceIntervals) return null;
-
-  const formatPrice = (price: number) => {
-    if (price >= 1000) {
-      return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
-    }
-    return price.toFixed(4);
-  };
 
   const getTargetColor = (confidence: number) => {
     if (confidence >= 70) return "text-bullish";
@@ -64,7 +60,7 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal,
               <div className="p-3 rounded-lg bg-bullish/5 border border-bullish/20 text-center">
                 <div className="text-xs text-muted-foreground mb-1">Conservative</div>
                 <div className="font-semibold text-bullish">
-                  ${formatPrice(priceTargets.conservative.price)}
+                  {formatConverted(priceTargets.conservative.price, "USD")}
                 </div>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   <div className="h-1.5 w-full max-w-[40px] rounded-full bg-muted/30 overflow-hidden">
@@ -81,7 +77,7 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal,
               <div className="p-3 rounded-lg bg-accent/5 border border-accent/20 text-center">
                 <div className="text-xs text-muted-foreground mb-1">Moderate</div>
                 <div className="font-semibold text-accent">
-                  ${formatPrice(priceTargets.moderate.price)}
+                  {formatConverted(priceTargets.moderate.price, "USD")}
                 </div>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   <div className="h-1.5 w-full max-w-[40px] rounded-full bg-muted/30 overflow-hidden">
@@ -98,7 +94,7 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal,
               <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
                 <div className="text-xs text-muted-foreground mb-1">Aggressive</div>
                 <div className="font-semibold text-primary">
-                  ${formatPrice(priceTargets.aggressive.price)}
+                  {formatConverted(priceTargets.aggressive.price, "USD")}
                 </div>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   <div className="h-1.5 w-full max-w-[40px] rounded-full bg-muted/30 overflow-hidden">
@@ -144,9 +140,9 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal,
                   )}
                 </div>
                 <div className="text-xs text-right min-w-[100px]">
-                  <span className="text-bearish">${formatPrice(confidenceIntervals.short.low)}</span>
+                  <span className="text-bearish">{formatConverted(confidenceIntervals.short.low, "USD")}</span>
                   <span className="text-muted-foreground"> - </span>
-                  <span className="text-bullish">${formatPrice(confidenceIntervals.short.high)}</span>
+                  <span className="text-bullish">{formatConverted(confidenceIntervals.short.high, "USD")}</span>
                 </div>
               </div>
             )}
@@ -171,9 +167,9 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal,
                   )}
                 </div>
                 <div className="text-xs text-right min-w-[100px]">
-                  <span className="text-bearish">${formatPrice(confidenceIntervals.medium.low)}</span>
+                  <span className="text-bearish">{formatConverted(confidenceIntervals.medium.low, "USD")}</span>
                   <span className="text-muted-foreground"> - </span>
-                  <span className="text-bullish">${formatPrice(confidenceIntervals.medium.high)}</span>
+                  <span className="text-bullish">{formatConverted(confidenceIntervals.medium.high, "USD")}</span>
                 </div>
               </div>
             )}
@@ -198,9 +194,9 @@ const PriceTargets = ({ currentPrice, priceTargets, confidenceIntervals, signal,
                   )}
                 </div>
                 <div className="text-xs text-right min-w-[100px]">
-                  <span className="text-bearish">${formatPrice(confidenceIntervals.long.low)}</span>
+                  <span className="text-bearish">{formatConverted(confidenceIntervals.long.low, "USD")}</span>
                   <span className="text-muted-foreground"> - </span>
-                  <span className="text-bullish">${formatPrice(confidenceIntervals.long.high)}</span>
+                  <span className="text-bullish">{formatConverted(confidenceIntervals.long.high, "USD")}</span>
                 </div>
               </div>
             )}

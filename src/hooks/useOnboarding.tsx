@@ -13,7 +13,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "disclaimer",
     title: "Important: Educational Tool",
-    description: "BullBearDays provides scenario analysis for educational purposes only. Not financial advice. Always do your own research and consult licensed advisors before trading.",
+    description: "bullbeardays provides scenario analysis for educational purposes only. Not financial advice. Always do your own research and consult licensed advisors before trading.",
     target: ".disclaimer-banner",
   },
   {
@@ -48,6 +48,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ];
 
+const ONBOARDING_STORAGE_KEY = "bullbeardays_onboarding_completed";
+
 export const useOnboarding = () => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
@@ -55,33 +57,55 @@ export const useOnboarding = () => {
   const [isCompleted, setIsCompleted] = useState(true);
 
   const checkOnboardingStatus = useCallback(async () => {
-    if (!user) return;
+    // Check localStorage first (works for all users, authenticated or not)
+    const hasSeenOnboarding = localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
+    
+    if (hasSeenOnboarding) {
+      setIsCompleted(true);
+      setIsActive(false);
+      return;
+    }
 
-    try {
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("onboarding_completed")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    // If user is authenticated, also check database for consistency
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from("user_preferences")
+          .select("onboarding_completed")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (error) throw error;
-      
-      if (data) {
-        setIsCompleted(data.onboarding_completed);
-        if (!data.onboarding_completed) {
+        if (error) throw error;
+        
+        if (data) {
+          const dbCompleted = data.onboarding_completed;
+          setIsCompleted(dbCompleted);
+          // If database says completed but localStorage doesn't, sync localStorage
+          if (dbCompleted) {
+            localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+            setIsActive(false);
+          } else {
+            setIsActive(true);
+          }
+        } else {
+          // Create preferences if they don't exist
+          await supabase.from("user_preferences").insert({
+            user_id: user.id,
+            onboarding_completed: false,
+          });
+          setIsCompleted(false);
           setIsActive(true);
         }
-      } else {
-        // Create preferences if they don't exist
-        await supabase.from("user_preferences").insert({
-          user_id: user.id,
-          onboarding_completed: false,
-        });
-        setIsCompleted(false);
-        setIsActive(true);
+      } catch (error) {
+        console.error("Failed to check onboarding status:", error);
+        // Fallback: if database check fails, use localStorage
+        setIsCompleted(hasSeenOnboarding);
+        setIsActive(!hasSeenOnboarding);
       }
-    } catch (error) {
-      console.error("Failed to check onboarding status:", error);
+    } else {
+      // For non-authenticated users, use localStorage only
+      setIsCompleted(false);
+      setIsActive(true);
     }
   }, [user]);
 
@@ -109,26 +133,33 @@ export const useOnboarding = () => {
   };
 
   const completeOnboarding = async () => {
-    if (!user) return;
+    // Always save to localStorage (works for all users)
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+    setIsActive(false);
+    setIsCompleted(true);
 
-    try {
-      await supabase
-        .from("user_preferences")
-        .upsert({
-          user_id: user.id,
-          onboarding_completed: true,
-        });
-      
-      setIsActive(false);
-      setIsCompleted(true);
-    } catch (error) {
-      console.error("Failed to complete onboarding:", error);
+    // If user is authenticated, also update database
+    if (user) {
+      try {
+        await supabase
+          .from("user_preferences")
+          .upsert({
+            user_id: user.id,
+            onboarding_completed: true,
+          });
+      } catch (error) {
+        console.error("Failed to update onboarding status in database:", error);
+        // localStorage is already set, so continue
+      }
     }
   };
 
   const restartOnboarding = () => {
+    // Clear localStorage flag to allow restarting
+    localStorage.removeItem(ONBOARDING_STORAGE_KEY);
     setCurrentStep(0);
     setIsActive(true);
+    setIsCompleted(false);
   };
 
   return {

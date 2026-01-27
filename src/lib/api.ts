@@ -1,16 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
+import {
+  UnifiedAnalysis,
+  ScenarioAnalysis,
+  LegacyAnalysis,
+  PriceTarget,
+  ConfidenceInterval,
+  MarketCategory,
+  MarketDataItem,
+  TradingStrategy,
+  isScenarioAnalysis,
+  isLegacyAnalysis,
+} from "@/lib/types";
 
-export interface PriceTarget {
-  price: number;
-  confidence: number;
-}
-
-export interface ConfidenceInterval {
-  low: number;
-  high: number;
-  timeframe: string;
-}
-
+// Legacy AnalysisResult type - kept for backward compatibility
+// New code should use UnifiedAnalysis from types.ts
 export interface AnalysisResult {
   signal: "BUY" | "SELL" | "HOLD";
   probability: number;
@@ -38,26 +41,25 @@ export interface AnalysisResult {
   };
 }
 
-export type MarketCategory = 'crypto' | 'forex' | 'indices' | 'stocks';
-
-export interface MarketDataItem {
-  symbol: string;
-  price: number;
-  change24h: number;
-  changePercent24h: number;
-  volume24h: number;
-  high24h: number;
-  low24h: number;
-  category: MarketCategory;
-}
-
 export async function analyzeChart(
   imageBase64: string,
   selectedModels: string[],
-  referenceModel: string
-): Promise<AnalysisResult> {
+  referenceModel: string,
+  options?: {
+    strategy?: TradingStrategy;
+    timeframe?: string;
+    instrument?: string;
+  }
+): Promise<UnifiedAnalysis> {
   const { data, error } = await supabase.functions.invoke('analyze-chart', {
-    body: { imageBase64, selectedModels, referenceModel },
+    body: {
+      imageBase64,
+      selectedModels,
+      referenceModel,
+      strategy: options?.strategy,
+      timeframe: options?.timeframe,
+      instrument: options?.instrument,
+    },
   });
 
   if (error) {
@@ -69,7 +71,8 @@ export async function analyzeChart(
     throw new Error(data.error);
   }
 
-  return data as AnalysisResult;
+  // API now returns UnifiedAnalysis (ScenarioAnalysis or LegacyAnalysis)
+  return data as UnifiedAnalysis;
 }
 
 export async function fetchMarketData(): Promise<MarketDataItem[]> {
@@ -104,6 +107,8 @@ export interface AnalysisRecord {
   id: string;
   created_at: string;
   chart_image_url: string | null;
+
+  // Legacy format fields
   detected_asset: string | null;
   timeframe: string | null;
   signal: string;
@@ -115,6 +120,26 @@ export interface AnalysisRecord {
   market_sentiment: string | null;
   bullish_reasons: string[] | null;
   bearish_reasons: string[] | null;
+
+  // New scenario format fields (Phase 1)
+  trend_bias?: string | null;
+  confidence_score?: number | null;
+  bull_scenario?: any | null;  // JSONB
+  bear_scenario?: any | null;  // JSONB
+  strategy?: string | null;
+  detected_timeframe?: string | null;
+  selected_timeframe?: string | null;
+  final_timeframe?: string | null;
+  detected_instrument?: string | null;
+  selected_instrument?: string | null;
+  final_instrument?: string | null;
+  instrument_confidence?: number | null;
+  current_price?: number | null;
+  prompt_version?: string | null;
+  api_version?: string | null;
+  models_used?: string[] | null;
+
+  // Metadata
   ai_model: string;
   outcome: string | null;
   outcome_notes: string | null;
@@ -124,15 +149,58 @@ export interface AnalysisRecord {
 }
 
 export async function saveAnalysis(
-  analysis: AnalysisResult,
+  analysis: UnifiedAnalysis | AnalysisResult,
   chartImageUrl?: string,
   sessionId?: string,
   userId?: string
 ): Promise<AnalysisRecord> {
-  const { data, error } = await supabase
-    .from('analyses')
-    .insert({
-      chart_image_url: chartImageUrl || null,
+  let insertData: any = {
+    chart_image_url: chartImageUrl || null,
+    session_id: sessionId || null,
+    user_id: userId || null,
+  };
+
+  if (isScenarioAnalysis(analysis)) {
+    // Save ScenarioAnalysis in new format
+    insertData = {
+      ...insertData,
+      // New scenario fields
+      trend_bias: analysis.trendBias,
+      confidence_score: analysis.confidenceScore,
+      bull_scenario: analysis.bullScenario,
+      bear_scenario: analysis.bearScenario,
+      strategy: analysis.strategy,
+      detected_timeframe: analysis.timeframe.detected || null,
+      selected_timeframe: analysis.timeframe.selected || null,
+      final_timeframe: analysis.timeframe.final,
+      detected_instrument: analysis.instrument.detected || null,
+      selected_instrument: analysis.instrument.selected || null,
+      final_instrument: analysis.instrument.final,
+      instrument_confidence: analysis.instrument.confidence || null,
+      current_price: analysis.currentPrice || null,
+      prompt_version: analysis.promptVersion || null,
+      api_version: analysis.apiVersion || null,
+      models_used: analysis.modelsUsed || null,
+      ai_model: analysis.aiModel,
+
+      // Also populate legacy fields for backward compatibility
+      signal: analysis.trendBias === 'BULLISH' ? 'BUY' :
+              analysis.trendBias === 'BEARISH' ? 'SELL' : 'HOLD',
+      probability: analysis.confidenceScore,
+      detected_asset: analysis.instrument.final,
+      timeframe: analysis.timeframe.final,
+      take_profit: analysis.takeProfit || null,
+      stop_loss: analysis.stopLoss || null,
+      risk_reward: analysis.riskReward || null,
+      chart_analysis: analysis.bullScenario.thesis,
+      market_sentiment: analysis.bearScenario.thesis,
+      bullish_reasons: analysis.bullScenario.evidence,
+      bearish_reasons: analysis.bearScenario.evidence,
+    };
+  } else if ('detectedAsset' in analysis) {
+    // Save AnalysisResult in legacy format only
+    insertData = {
+      ...insertData,
       detected_asset: analysis.detectedAsset,
       timeframe: analysis.timeframe,
       signal: analysis.signal,
@@ -145,9 +213,30 @@ export async function saveAnalysis(
       bullish_reasons: analysis.bullishReasons,
       bearish_reasons: analysis.bearishReasons,
       ai_model: analysis.aiModel,
-      session_id: sessionId || null,
-      user_id: userId || null,
-    })
+    };
+  } else {
+    // Save LegacyAnalysis in legacy format only
+    const legacyAnalysis = analysis as LegacyAnalysis;
+    insertData = {
+      ...insertData,
+      detected_asset: legacyAnalysis.detectedAsset || 'Unknown',
+      timeframe: (legacyAnalysis as any).timeframe || '1D',
+      signal: legacyAnalysis.signal,
+      probability: legacyAnalysis.probability,
+      take_profit: legacyAnalysis.takeProfit,
+      stop_loss: legacyAnalysis.stopLoss,
+      risk_reward: legacyAnalysis.riskReward,
+      chart_analysis: legacyAnalysis.chartAnalysis,
+      market_sentiment: legacyAnalysis.marketSentiment,
+      bullish_reasons: legacyAnalysis.reasoning.bullish,
+      bearish_reasons: legacyAnalysis.reasoning.bearish,
+      ai_model: legacyAnalysis.aiModel,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('analyses')
+    .insert(insertData)
     .select()
     .single();
 

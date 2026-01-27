@@ -37,9 +37,9 @@ const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
     <Alert
       className={`
         disclaimer-banner
-        ${isHeader ? "rounded-none border-x-0 border-t-0" : ""}
-        ${isFooter ? "rounded-none border-x-0 border-b-0 mt-8" : ""}
-        bg-amber-500/10 border-amber-500/30 text-foreground
+        ${isHeader ? "rounded-xl border border-amber-500/40 shadow-sm" : ""}
+        ${isFooter ? "rounded-xl border border-amber-500/40 mt-8" : ""}
+        bg-amber-500/10 text-foreground
       `}
     >
       <div className="flex items-start gap-3">

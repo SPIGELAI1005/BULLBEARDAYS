@@ -292,7 +292,7 @@ export const generatePDFReport = (analyses: AnalysisRecord[]) => {
   </div>
 
   <div class="footer">
-    <p>BullBearDays AI Trading Analysis • Generated ${new Date().toISOString()}</p>
+    <p>bullbeardays AI Trading Analysis • Generated ${new Date().toISOString()}</p>
   </div>
 </body>
 </html>`;

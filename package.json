@@ -1,7 +1,23 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "bullbeardays",
+  "description": "AI-powered trading chart analyzer providing BUY/SELL/HOLD signals with performance tracking",
+  "version": "1.0.0",
+  "author": "BullBearDays",
+  "homepage": "https://bullbeardays.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bullbeardays/chart-insights-ai"
+  },
+  "keywords": [
+    "trading",
+    "ai",
+    "chart-analysis",
+    "technical-analysis",
+    "crypto",
+    "forex",
+    "stocks"
+  ],
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -48,6 +64,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
+    "gsap": "^3.14.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",

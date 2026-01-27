@@ -1,30 +1,10 @@
 import { useEffect, useState } from "react";
 import bullbearLogo from "@/assets/bullbeardays-logo.png";
-
-type TimeOfDay = "sunrise" | "day" | "sunset" | "night";
+import { useMarketSession } from "@/hooks/useMarketSession";
 
 const AnimatedLogo = () => {
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("day");
+  const { timeOfDay, session } = useMarketSession();
   const [pulse, setPulse] = useState(0);
-
-  useEffect(() => {
-    const updateTimeOfDay = () => {
-      const hour = new Date().getHours();
-      if (hour >= 5 && hour < 8) {
-        setTimeOfDay("sunrise");
-      } else if (hour >= 8 && hour < 17) {
-        setTimeOfDay("day");
-      } else if (hour >= 17 && hour < 20) {
-        setTimeOfDay("sunset");
-      } else {
-        setTimeOfDay("night");
-      }
-    };
-
-    updateTimeOfDay();
-    const interval = setInterval(updateTimeOfDay, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -89,18 +69,6 @@ const AnimatedLogo = () => {
 
   const colors = getThemeColors();
 
-  // Session labels
-  const getSessionLabel = () => {
-    switch (timeOfDay) {
-      case "sunrise": return { icon: "🌅", text: "Asian Session" };
-      case "day": return { icon: "📈", text: "Markets Open" };
-      case "sunset": return { icon: "🌆", text: "US Close" };
-      case "night": return { icon: "🌙", text: "After Hours" };
-    }
-  };
-
-  const session = getSessionLabel();
-
   return (
     <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center">
       {/* Ambient background glow - time aware */}
@@ -133,23 +101,6 @@ const AnimatedLogo = () => {
         }}
       />
 
-      {/* Stars for night mode */}
-      {timeOfDay === "night" && (
-        <div className="absolute inset-0">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-              style={{
-                top: `${15 + Math.random() * 70}%`,
-                left: `${15 + Math.random() * 70}%`,
-                animationDelay: `${i * 0.3}s`,
-                opacity: 0.6,
-              }}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Sun/Moon element */}
       {(timeOfDay === "sunrise" || timeOfDay === "sunset") && (
@@ -272,42 +223,12 @@ const AnimatedLogo = () => {
       {/* Inner ring */}
       <div className={`absolute inset-14 rounded-full ${colors.ringColor} border`} />
 
-      {/* Floating data particles */}
-      <div className="absolute inset-0">
-        <div 
-          className={`absolute w-2 h-2 ${colors.particleColor} rounded-full`}
-          style={{
-            top: '28%',
-            left: '72%',
-            animation: 'pulse 2s ease-in-out infinite',
-            boxShadow: `0 0 8px rgb(${colors.primary})`,
-          }}
-        />
-        <div 
-          className={`absolute w-1.5 h-1.5 ${colors.particleColor} rounded-full opacity-80`}
-          style={{
-            top: '42%',
-            left: '52%',
-            animation: 'pulse 2s ease-in-out infinite 0.5s',
-            boxShadow: `0 0 6px rgb(${colors.secondary})`,
-          }}
-        />
-        <div 
-          className={`absolute w-1 h-1 ${colors.particleColor} rounded-full opacity-60`}
-          style={{
-            top: '58%',
-            left: '38%',
-            animation: 'pulse 2s ease-in-out infinite 1s',
-            boxShadow: `0 0 4px rgb(${colors.primary})`,
-          }}
-        />
-      </div>
       
       {/* Logo */}
       <div className="relative z-10 w-36 h-36 md:w-48 md:h-48">
         <img
           src={bullbearLogo}
-          alt="BullBearDays - Bull vs Bear"
+          alt="bullbeardays - bull vs bear"
           className="w-full h-full object-contain animate-float-subtle"
           style={{
             filter: `drop-shadow(0 4px 20px rgba(${colors.primary}, 0.3))`,

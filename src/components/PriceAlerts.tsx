@@ -1,6 +1,7 @@
 import { Bell, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { usePriceAlerts, PriceAlert } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface PriceAlertsProps {
   onCreateAlert?: (asset: string, price: number, type: "TP" | "SL" | "CUSTOM") => void;
@@ -9,6 +10,12 @@ interface PriceAlertsProps {
 const PriceAlerts = ({ onCreateAlert }: PriceAlertsProps) => {
   const { user } = useAuth();
   const { alerts, isLoading, deleteAlert } = usePriceAlerts();
+  const { formatConverted } = useCurrency();
+  
+  const formatAlertPrice = (price: number) => {
+    // Convert from USD (alerts are typically stored in USD)
+    return formatConverted(price, "USD");
+  };
 
   if (!user) {
     return (
@@ -76,7 +83,7 @@ const PriceAlerts = ({ onCreateAlert }: PriceAlertsProps) => {
                       {alert.asset}
                     </span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      @ {alert.target_price}
+                      @ {formatAlertPrice(alert.target_price)}
                     </span>
                   </div>
                 </div>

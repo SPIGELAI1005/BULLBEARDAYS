@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { BarChart3, X, Plus, TrendingUp, TrendingDown, Loader2, ArrowRight } from "lucide-react";
 import { analyzeMarketData, MarketDataItem } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface ComparisonItem {
   asset: MarketDataItem;
@@ -24,6 +25,7 @@ interface MarketComparisonProps {
 
 const MarketComparison = ({ availableAssets, isOpen, onClose }: MarketComparisonProps) => {
   const { toast } = useToast();
+  const { formatConverted } = useCurrency();
   const [comparisonItems, setComparisonItems] = useState<ComparisonItem[]>([]);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
 
@@ -84,10 +86,15 @@ const MarketComparison = ({ availableAssets, isOpen, onClose }: MarketComparison
     setComparisonItems(prev => prev.filter(item => item.asset.symbol !== symbol));
   };
 
-  const formatPrice = (price: number, symbol: string) => {
-    if (symbol.includes('JPY')) return price.toFixed(2);
-    if (price >= 1000) return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
-    return price.toFixed(4);
+  const formatPrice = (price: number, symbol: string, category?: string) => {
+    // For forex, don't convert
+    if (category === 'forex') {
+      if (symbol.includes('JPY')) return price.toFixed(2);
+      if (price >= 1000) return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
+      return price.toFixed(4);
+    }
+    // For other assets, convert from USD
+    return formatConverted(price, "USD");
   };
 
   const getSignalColor = (signal: string) => {
@@ -195,7 +202,7 @@ const MarketComparison = ({ availableAssets, isOpen, onClose }: MarketComparison
               <div className="mb-4">
                 <h3 className="font-bold text-foreground">{item.asset.symbol}</h3>
                 <div className="text-lg font-semibold text-foreground">
-                  ${formatPrice(item.asset.price, item.asset.symbol)}
+                  {formatPrice(item.asset.price, item.asset.symbol, item.asset.category)}
                 </div>
                 <div className={`flex items-center gap-1 text-sm ${
                   item.asset.changePercent24h >= 0 ? 'text-bullish' : 'text-bearish'
@@ -287,7 +294,7 @@ const MarketComparison = ({ availableAssets, isOpen, onClose }: MarketComparison
                   >
                     <div className="text-sm font-medium text-foreground">{asset.symbol}</div>
                     <div className="text-xs text-muted-foreground">
-                      ${formatPrice(asset.price, asset.symbol)}
+                      {formatPrice(asset.price, asset.symbol, asset.category)}
                     </div>
                   </button>
                 );

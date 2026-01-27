@@ -21,7 +21,7 @@ const ShareCard = ({ analysis, onClose }: ShareCardProps) => {
 🎯 TP: ${analysis.take_profit || "N/A"} | SL: ${analysis.stop_loss || "N/A"}
 ${analysis.outcome ? `${outcomeEmoji} Outcome: ${analysis.outcome}` : ""}
 
-Analyzed with BullBearDays AI 🤖`;
+Analyzed with bullbeardays AI 🤖`;
   };
 
   const handleCopy = async () => {

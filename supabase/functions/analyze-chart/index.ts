@@ -10,6 +10,10 @@ interface AnalysisRequest {
   imageBase64: string;
   selectedModels: string[];
   referenceModel: string;
+  // First-class inputs (Phase 1)
+  strategy?: string;        // User-selected trading strategy
+  timeframe?: string;       // User-selected timeframe
+  instrument?: string;      // User-selected instrument
 }
 
 const modelMapping: Record<string, string> = {
@@ -76,7 +80,7 @@ serve(async (req) => {
       );
     }
 
-    const { imageBase64, selectedModels, referenceModel } = await req.json() as AnalysisRequest;
+    const { imageBase64, selectedModels, referenceModel, strategy, timeframe, instrument } = await req.json() as AnalysisRequest;
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -86,29 +90,63 @@ serve(async (req) => {
     const model = modelMapping[referenceModel] || "google/gemini-2.5-pro";
     const displayName = modelDisplayNames[referenceModel] || "AI";
 
-    const systemPrompt = `You are an expert trading analyst with deep knowledge of technical analysis, chart patterns, market microstructure, and risk management. You analyze chart screenshots to provide actionable trading insights.
+    // Build context from user inputs
+    const userContext = [];
+    if (strategy) userContext.push(`Trading Strategy: ${strategy}`);
+    if (timeframe) userContext.push(`Timeframe: ${timeframe}`);
+    if (instrument) userContext.push(`Instrument: ${instrument}`);
+    const contextString = userContext.length > 0
+      ? `\n\nUser Context:\n${userContext.join('\n')}\n(Use this context to inform your analysis, but you may detect different values from the chart if needed)`
+      : '';
 
+    const systemPrompt = `You are an expert trading analyst with deep knowledge of technical analysis, chart patterns, market microstructure, and risk management. You analyze chart screenshots to provide educational scenario analysis.
+${contextString}
 Your task is to analyze the provided chart image and return a JSON response with the following structure:
 {
-  "signal": "BUY" | "SELL" | "HOLD",
-  "probability": number (0-100, your confidence in the signal),
-  "takeProfit": string (e.g., "+2.5%" or "+$150"),
-  "stopLoss": string (e.g., "-1.2%" or "-$75"),
-  "riskReward": string (e.g., "1:2.1"),
-  "detectedAsset": string (the trading pair or asset you identify, e.g., "BTC/USDT", "EUR/USD", "AAPL"),
-  "timeframe": string (the chart timeframe you detect, e.g., "15m", "1H", "4H", "Daily"),
-  "chartAnalysis": string (2-3 sentences about the technical setup, patterns, indicators),
-  "marketSentiment": string (1-2 sentences about broader market context),
-  "bullishReasons": string[] (3-4 reasons why this trade could succeed),
-  "bearishReasons": string[] (2-3 risk factors or reasons it might fail)
+  "trendBias": "BULLISH" | "BEARISH" | "NEUTRAL",
+  "confidenceScore": number (0-100, your confidence in the chart read quality),
+  "bullScenario": {
+    "thesis": string (1-2 sentences explaining the bull case),
+    "evidence": string[] (3-5 technical observations supporting the bull scenario),
+    "keyLevels": {
+      "support": string[] (key support levels, e.g., ["$42,000", "$40,500"]),
+      "resistance": string[] (key resistance levels, e.g., ["$45,000", "$47,200"])
+    },
+    "invalidation": string (price level or condition that would invalidate this scenario),
+    "riskNotes": string[] (2-3 risks to this scenario)
+  },
+  "bearScenario": {
+    "thesis": string (1-2 sentences explaining the bear case),
+    "evidence": string[] (3-5 technical observations supporting the bear scenario),
+    "keyLevels": {
+      "support": string[] (key support levels),
+      "resistance": string[] (key resistance levels)
+    },
+    "invalidation": string (price level or condition that would invalidate this scenario),
+    "riskNotes": string[] (2-3 risks to this scenario)
+  },
+  "instrument": {
+    "detected": string (the trading pair or asset you identify, e.g., "BTC/USDT", "EUR/USD", "AAPL"),
+    "confidence": number (0-100, confidence in instrument detection)
+  },
+  "timeframe": {
+    "detected": string (the chart timeframe you detect, e.g., "15m", "1H", "4H", "Daily")
+  },
+  "currentPrice": number | null (current price if visible on chart),
+  "takeProfit": string (suggested target for the trend bias direction, e.g., "+2.5%" or "$45,000"),
+  "stopLoss": string (suggested invalidation level, e.g., "-1.2%" or "$40,000"),
+  "riskReward": string (risk/reward ratio, e.g., "1:2.1")
 }
 
 Guidelines:
+- IMPORTANT: Your role is educational scenario analysis, NOT trading recommendations
+- Present BOTH bull and bear scenarios objectively, regardless of your trend bias
+- trendBias reflects which scenario currently has more technical evidence, but both scenarios should be thorough
 - Look for candlestick patterns, support/resistance levels, trend lines, and common indicators
-- Be specific about price levels when possible
-- Consider risk/reward ratio in your analysis
-- Be honest about uncertainty - if the chart is unclear, reflect that in lower probability
-- Always provide balanced analysis with both bullish and bearish considerations
+- Be specific about price levels when identifying key levels
+- Include both sides of the market story - what bulls see vs what bears see
+- Be honest about uncertainty - if the chart is unclear, reflect that in lower confidenceScore
+- If user provided context (strategy/timeframe/instrument), use it but you may detect different values
 - Return ONLY valid JSON, no markdown or extra text`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -121,12 +159,12 @@ Guidelines:
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { 
-            role: "user", 
+          {
+            role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze this trading chart and provide your trading recommendation in JSON format."
+                text: "Analyze this trading chart and provide educational scenario analysis in JSON format. Present both bull and bear scenarios objectively."
               },
               {
                 type: "image_url",
@@ -182,32 +220,103 @@ Guidelines:
       const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[0]);
-        console.log("Successfully parsed analysis, signal:", analysis.signal);
+        console.log("Successfully parsed analysis, trendBias:", analysis.trendBias);
       } else {
         console.error("No JSON object found in response:", content.substring(0, 500));
         throw new Error("No JSON found in response");
       }
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
-      // Return a structured fallback
+      // Return a structured fallback in ScenarioAnalysis format
       analysis = {
-        signal: "HOLD",
-        probability: 50,
+        trendBias: "NEUTRAL",
+        confidenceScore: 30,
+        bullScenario: {
+          thesis: "Unable to fully analyze the chart due to image quality or clarity issues.",
+          evidence: [
+            "Chart requires clearer view for detailed technical analysis",
+            "Price action and indicators need better visibility"
+          ],
+          keyLevels: {
+            support: [],
+            resistance: []
+          },
+          invalidation: "N/A - Analysis inconclusive",
+          riskNotes: [
+            "Insufficient data for confident scenario assessment",
+            "Image quality prevents accurate technical reading"
+          ]
+        },
+        bearScenario: {
+          thesis: "Unable to fully analyze the chart due to image quality or clarity issues.",
+          evidence: [
+            "Chart requires clearer view for detailed technical analysis",
+            "Price action and indicators need better visibility"
+          ],
+          keyLevels: {
+            support: [],
+            resistance: []
+          },
+          invalidation: "N/A - Analysis inconclusive",
+          riskNotes: [
+            "Insufficient data for confident scenario assessment",
+            "Image quality prevents accurate technical reading"
+          ]
+        },
+        instrument: {
+          detected: instrument || "Unknown",
+          confidence: 0
+        },
+        timeframe: {
+          detected: timeframe || "Unknown"
+        },
+        currentPrice: null,
         takeProfit: "N/A",
         stopLoss: "N/A",
-        riskReward: "N/A",
-        detectedAsset: "Unknown",
-        timeframe: "Unknown",
-        chartAnalysis: "Unable to fully analyze the chart. Please ensure the image is clear and shows a trading chart.",
-        marketSentiment: "Analysis inconclusive.",
-        bullishReasons: ["Chart needs clearer view for detailed analysis"],
-        bearishReasons: ["Insufficient data for confident assessment"],
+        riskReward: "N/A"
       };
     }
 
-    // Add the AI model info
+    // Add the AI model info and user context
     analysis.aiModel = displayName;
     analysis.modelsUsed = selectedModels.map(m => modelDisplayNames[m] || m);
+
+    // Merge user-provided context with detected values
+    if (instrument || timeframe || strategy) {
+      // Update instrument info to include user selection
+      if (instrument) {
+        analysis.instrument = {
+          detected: analysis.instrument?.detected,
+          selected: instrument,
+          final: instrument, // User selection takes precedence
+          confidence: analysis.instrument?.confidence
+        };
+      }
+
+      // Update timeframe info to include user selection
+      if (timeframe) {
+        analysis.timeframe = {
+          detected: analysis.timeframe?.detected,
+          selected: timeframe,
+          final: timeframe // User selection takes precedence
+        };
+      }
+
+      // Add strategy
+      if (strategy) {
+        analysis.strategy = strategy;
+      }
+    } else {
+      // No user context - use detected values as final
+      if (analysis.instrument) {
+        analysis.instrument.final = analysis.instrument.detected || "Unknown";
+      }
+      if (analysis.timeframe) {
+        analysis.timeframe.final = analysis.timeframe.detected || "1D";
+        analysis.timeframe.selected = analysis.timeframe.detected || "1D";
+      }
+      analysis.strategy = analysis.strategy || "swingTrader";
+    }
 
     return new Response(
       JSON.stringify(analysis),

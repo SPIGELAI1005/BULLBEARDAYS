@@ -28,7 +28,7 @@ const OnboardingTour = () => {
 
       {/* Tour modal */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md mx-4">
-        <div className="glass-panel p-6 shadow-2xl">
+        <div className="glass-panel p-6 shadow-2xl min-h-[260px] flex flex-col">
           {/* Progress bar */}
           <div className="h-1 bg-muted rounded-full mb-4 overflow-hidden">
             <div
@@ -55,10 +55,12 @@ const OnboardingTour = () => {
 
           {/* Content */}
           <h3 className="text-lg font-semibold text-foreground mb-2">{step.title}</h3>
-          <p className="text-sm text-muted-foreground mb-6">{step.description}</p>
+          <p className="text-sm text-muted-foreground mb-6 min-h-[72px]">
+            {step.description}
+          </p>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-auto">
             <button
               onClick={skipOnboarding}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"

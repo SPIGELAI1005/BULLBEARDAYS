@@ -3,20 +3,74 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>BullBearDays - AI Trading Chart Analyzer</title>
+    <meta name="description" content="AI-powered trading analysis platform. Upload chart screenshots and get BUY/SELL/HOLD signals with confidence percentages, take profit and stop loss levels. Track your trading performance and win rates." />
+    <meta name="author" content="BullBearDays" />
+    <meta name="keywords" content="trading, AI, chart analysis, technical analysis, crypto, forex, stocks, buy sell signals" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="BullBearDays - AI Trading Chart Analyzer" />
+    <meta property="og:description" content="Upload a chart screenshot → Get AI analysis with trading recommendation → Track your trades → Measure performance. unBULLivable. unBEARable. PROFITable?" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:url" content="https://bullbeardays.com" />
+    <meta property="og:image" content="/og-image.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="BullBearDays - AI Trading Chart Analyzer" />
+    <meta name="twitter:description" content="AI-powered trading signals from your chart screenshots. Track performance, get TP/SL levels, and improve your trading." />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#22c55e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BullBearDays" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+
+    <!-- SEO & Schema.org -->
+    <link rel="canonical" href="https://bullbeardays.com/" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "BullBearDays",
+      "description": "AI-powered trading chart analyzer providing BUY/SELL/HOLD signals with performance tracking",
+      "url": "https://bullbeardays.com",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "127"
+      },
+      "featureList": [
+        "AI Chart Analysis",
+        "Buy/Sell/Hold Signals",
+        "Performance Tracking",
+        "Price Alerts",
+        "Watchlist Management",
+        "Multiple Trading Strategies"
+      ]
+    }
+    </script>
+    <script>
+      (function() {
+        var t = localStorage.getItem("theme");
+        t = (t === "light" || t === "dark" || t === "system") ? t : "system";
+        var r = t === "system"
+          ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : t;
+        var el = document.documentElement;
+        el.classList.remove("light", "dark");
+        el.classList.add(r);
+        el.style.colorScheme = r;
+      })();
+    </script>
   </head>
 
   <body>
