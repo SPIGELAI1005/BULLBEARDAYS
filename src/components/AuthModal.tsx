@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -19,8 +20,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     password: "",
     displayName: "",
   });
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,25 +45,27 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
+  if (!isOpen) return null;
+
+  const modal = (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
       <div
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         onClick={onClose}
+        aria-hidden="true"
       />
-
-      {/* Modal */}
       <div className="relative glass-panel w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+          aria-label="Close"
         >
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
 
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground">
+          <h2 id="auth-modal-title" className="text-2xl font-bold text-foreground">
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -135,6 +136,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4 text-muted-foreground" />
@@ -151,7 +153,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             className="w-full py-3 px-6 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
-              <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" aria-hidden />
             ) : isLogin ? (
               "Sign In"
             ) : (
@@ -162,6 +164,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
         <div className="mt-6 text-center">
           <button
+            type="button"
             onClick={() => setIsLogin(!isLogin)}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -173,6 +176,8 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 };
 
 export default AuthModal;

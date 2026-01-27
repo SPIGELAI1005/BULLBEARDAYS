@@ -243,7 +243,7 @@ export default function Pricing() {
       <CandlestickBackground />
       <div className="relative z-10">
         <Header />
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-52 pb-20">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-44 pb-16 md:pt-52 md:pb-20">
           <Link
             to="/"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/50 hover:bg-muted border border-border text-sm font-medium text-foreground mb-8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d81b5c] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -265,10 +265,10 @@ export default function Pricing() {
         </section>
 
         {/* Billing toggle */}
-        <div className="flex flex-col items-center gap-4 mb-12">
+        <div className="flex flex-col items-center gap-3 md:gap-4 mb-8 md:mb-12">
           <span className="text-sm text-muted-foreground">Billing period</span>
           <div
-            className="flex rounded-xl p-1 bg-muted/30 border border-border"
+            className="flex flex-wrap justify-center gap-1 rounded-xl p-1 bg-muted/30 border border-border"
             role="group"
             aria-label="Billing period"
           >
@@ -276,7 +276,7 @@ export default function Pricing() {
               type="button"
               onClick={() => setBillingPeriod("monthly")}
               className={cn(
-                "px-6 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d81b5c] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "px-4 sm:px-6 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d81b5c] focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]",
                 billingPeriod === "monthly"
                   ? "bg-[#d81b5c] text-white"
                   : "text-muted-foreground hover:text-foreground"
@@ -290,7 +290,7 @@ export default function Pricing() {
               type="button"
               onClick={() => setBillingPeriod("yearly")}
               className={cn(
-                "px-6 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d81b5c] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "px-4 sm:px-6 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d81b5c] focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]",
                 billingPeriod === "yearly"
                   ? "bg-[#d81b5c] text-white"
                   : "text-muted-foreground hover:text-foreground"
@@ -305,7 +305,7 @@ export default function Pricing() {
 
         {/* Pricing cards */}
         <section
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-20"
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-12 md:mb-20"
           aria-label="Plans"
         >
           {TIER_PLANS.map((plan) => (

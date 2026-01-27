@@ -21,7 +21,7 @@ Context, conventions, and recent decisions for **BullBearDays** (`chart-insights
 | `src/pages/Pricing.tsx` | Pricing page; liquid-glass UI, billing toggle, plans, Founder offer, FAQ, Footer. |
 | `src/pages/Signup.tsx` | Placeholder signup; reads `?plan=`, “Back to Pricing”, Footer. |
 | `src/pages/Terms.tsx`, `Privacy.tsx`, `RiskDisclosure.tsx`, `Methodology.tsx` | Legal/info pages; “Back to Home”, glass panel, Footer. |
-| `src/components/Header.tsx` | Fixed header: logo, nav (Analyze, Performance, About, Pricing), CurrencyToggle, ThemeToggle, market status chip, user menu. |
+| `src/components/Header.tsx` | Fixed header: logo, nav (Analyze, Performance, About, Pricing), mobile hamburger + Sheet (&lt; md), CurrencyToggle, ThemeToggle, market status chip, user menu. AuthModal (Sign In) portaled from Header. |
 | `src/components/Footer.tsx` | Shared footer: Terms, Risk Disclosure, Privacy, Methodology, copyright, disclaimers, optional Keyboard Shortcuts. |
 | `src/components/DisclaimerGate.tsx` | Modal before use; Agree / Exit. |
 | `src/components/DisclaimerBanner.tsx` | Dismissible banner in header (variant `dismissible`, position `header`). |
@@ -67,6 +67,10 @@ Context, conventions, and recent decisions for **BullBearDays** (`chart-insights
 
 - Magenta `#d81b5c` (primary, CTAs), Bull green `#38b449`, Bear red `#de382f`, golden gradient for prices/Founder/PROFIT.
 
+### Modals & overlays
+
+- **User menu** (profile dropdown) and **AuthModal** (Sign In) render via `createPortal(..., document.body)` so they are not children of the Header DOM. This avoids React `insertBefore` errors when the Header tree updates (auth state, Sheet open/close). AuthModal uses `z-[120]`, mobile Sheet `z-[110]`.
+
 ---
 
 ## Last changes (summary)
@@ -76,6 +80,8 @@ Context, conventions, and recent decisions for **BullBearDays** (`chart-insights
 1. **Horizontal scroll / long line** — `glass-panel-subtle::before` shimmer overflowed (200% width, -100% left). Fixed by constraining to 100% width, animating `background-position` instead of `transform`, and adding `overflow-x: hidden` on `html`/`body`.
 2. **Back to Home / Back to Pricing not working** — Header + disclaimer overlapped the buttons. Fix: `pt-52` on main for Pricing, Terms, Privacy, RiskDisclosure, Methodology, Signup.
 3. **Footer copyright** — Set to `© 2026 bullbeardays.com // AI-powered trading scenario analysis.`
+4. **Profile menu "insertBefore" error** — User dropdown now portaled to `document.body` with `position: fixed`; menu closes when `user` or `isLoading` changes.
+5. **AuthModal "insertBefore" error** — Sign In modal now portaled to `document.body` when open; `z-[120]` so it appears above the mobile Sheet.
 
 ---
 

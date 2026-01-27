@@ -71,18 +71,18 @@ const MarketTicker = ({ onSelectAsset, onCompareClick }: MarketTickerProps) => {
   const filteredData = marketData.filter(item => item.category === activeCategory);
 
   return (
-    <div className="glass-panel-subtle p-4 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-primary" />
+    <div className="glass-panel-subtle p-3 md:p-4 mb-4 md:mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 md:mb-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <Activity className="w-4 h-4 text-primary shrink-0" />
           <span className="text-sm font-medium text-foreground">Live Markets</span>
           {onSelectAsset && (
-            <span className="text-xs text-muted-foreground ml-2">
+            <span className="hidden sm:inline text-xs text-muted-foreground ml-1">
               Click for instant analysis
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {/* Category Icons */}
           {CATEGORIES.map((cat) => (
             <button
@@ -119,7 +119,7 @@ const MarketTicker = ({ onSelectAsset, onCompareClick }: MarketTickerProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         {isLoading && filteredData.length === 0 ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="p-3 rounded-xl bg-muted/30 animate-pulse">

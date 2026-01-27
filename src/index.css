@@ -188,6 +188,10 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   html,
   body {
     overflow-x: hidden;
@@ -196,6 +200,13 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    button, a, [role="button"] {
+      touch-action: manipulation;
+    }
   }
 }
 

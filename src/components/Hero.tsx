@@ -129,20 +129,20 @@ const Hero = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-screen pt-56 pb-12 px-6 overflow-hidden"
+      className="relative min-h-screen pt-44 pb-10 px-4 md:pt-56 md:pb-12 md:px-6 overflow-hidden"
     >
       {/* Background Glow Effects */}
-      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-bullish/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-bearish/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-bullish/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-bearish/5 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Animated Logo with Cinema Light Effect */}
-        <div className="mb-12 flex justify-center">
+        <div className="mb-8 md:mb-12 flex justify-center">
           <AnimatedLogo />
         </div>
 
         {/* Headline with scroll-triggered typewriter animation */}
-        <div className="mb-6 space-y-6">
+        <div className="mb-4 md:mb-6 space-y-4 md:space-y-6">
           {/* Line 1: Left aligned, reveals left to right */}
           <div 
             ref={line1Ref}
@@ -173,7 +173,7 @@ const Hero = () => {
         {/* Description - fades in after text reveal */}
         <p 
           ref={descriptionRef}
-          className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed text-center"
+          className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed text-center px-1"
         >
           Upload any chart screenshot and let multiple AI models evaluate the technical setup,
           market sentiment, and key risks. You'll receive clear Bull and Bear scenarios, so you can
@@ -183,7 +183,7 @@ const Hero = () => {
         {/* Stats - fades in after description with counter effect */}
         <div 
           ref={statsRef}
-          className="flex items-center justify-center gap-8 md:gap-12"
+          className="flex flex-wrap items-center justify-center gap-4 md:gap-8 lg:gap-12"
         >
           <div className="text-center">
             <div ref={stat1Ref} className="text-2xl font-bold text-foreground">0</div>

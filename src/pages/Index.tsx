@@ -371,7 +371,7 @@ const Index = () => {
         }}
       />
 
-      <main id="analyze" className="max-w-7xl mx-auto px-6 pt-8 pb-20">
+      <main id="analyze" className="max-w-7xl mx-auto px-4 pt-6 pb-16 md:px-6 md:pt-8 md:pb-20">
         {/* Market Ticker with Comparison Button */}
         <MarketTicker 
           onSelectAsset={handleMarketAssetClick} 
@@ -379,7 +379,7 @@ const Index = () => {
         />
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
           {/* Left Column - Upload & Models + Results (spans 2 columns) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Mode Toggle - Chat / Single / Multi */}

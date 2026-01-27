@@ -35,8 +35,8 @@ const Footer = ({ onShortcutsClick }: FooterProps) => {
 
   return (
     <footer className="border-t border-border bg-background/50 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 md:px-6 md:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
           {footerLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -59,7 +59,7 @@ const Footer = ({ onShortcutsClick }: FooterProps) => {
           })}
         </div>
 
-        <div className="border-t border-border pt-8">
+        <div className="border-t border-border pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <div className="text-center md:text-left">
               © 2026 bullbeardays.com // AI-powered trading scenario analysis.

@@ -37,7 +37,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-foreground">
       <Header />
-      <main className="max-w-xl mx-auto px-4 sm:px-6 pt-52 pb-20">
+      <main className="max-w-xl mx-auto px-4 sm:px-6 pt-44 pb-16 md:pt-52 md:pb-20">
         <Link
           to="/pricing"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-sm font-medium text-foreground mb-8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d81b5c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0b]"
