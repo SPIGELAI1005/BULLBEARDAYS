@@ -21,6 +21,7 @@ import Pricing from "./pages/Pricing";
 import PricingConditions from "./pages/PricingConditions";
 import Billing from "./pages/Billing";
 import Signup from "./pages/Signup";
+import About from "./pages/About";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,7 @@ function App() {
                 <div className={isGateOpen ? "pointer-events-none select-none blur-md brightness-90" : ""}>
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/risk-disclosure" element={<RiskDisclosure />} />
                     <Route path="/privacy" element={<Privacy />} />

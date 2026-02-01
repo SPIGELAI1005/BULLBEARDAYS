@@ -13,7 +13,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 const NAV_LINKS = [
   { label: "Analyze", href: "/#analyze" },
   { label: "Performance", href: "/#performance" },
-  { label: "About", href: "/#about" },
+  { label: "About", href: "/about" },
   { label: "Pricing", href: "/pricing" },
 ] as const;
 
@@ -95,7 +95,7 @@ const Header = () => {
             <nav className="hidden md:flex items-center gap-8 shrink-0">
               <a href="/#analyze" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Analyze</a>
               <a href="/#performance" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Performance</a>
-              <a href="/#about" className="text-sm text-foreground/90 hover:text-foreground transition-colors">About</a>
+              <Link to="/about" className="text-sm text-foreground/90 hover:text-foreground transition-colors">About</Link>
               <Link to="/pricing" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Pricing</Link>
             </nav>
 
