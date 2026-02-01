@@ -120,6 +120,26 @@ Upload a chart screenshot → Get AI analysis with trading recommendation → Tr
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Billing & Stripe (2026-01-30+)
+
+This project uses **Stripe** for checkout/subscriptions and **Supabase** as the cached billing/usage store. Webhooks are handled by **Vercel Functions** (not Supabase).
+
+**Vercel Functions (Node):**
+- `POST /api/stripe/checkout` — create Checkout session and return `{ url }`
+- `POST /api/stripe/webhook` — verify signature, store event for idempotency, upsert cached billing state
+- `POST /api/stripe/portal` — create Billing Portal session and return `{ url }`
+
+**Supabase tables (billing):**
+- `stripe_customers` — map `auth.users.id` → `stripe_customer_id`
+- `subscriptions` — cached subscription status + period bounds + `plan_id`
+- `plan_entitlements` — plan limits (public readable)
+- `usage_tracking` — calendar-month usage counters
+- `stripe_events` — webhook idempotency + audit log
+
+**Usage enforcement:**
+- Supabase Edge Functions `analyze-chart` and `analyze-market` call RPC `check_usage_limit(user_id, 'analysis', 1)` before expensive AI operations.
+- When blocked, functions respond with `code: "USAGE_LIMIT_REACHED"` (client shows an Upgrade CTA).
+
 ---
 
 ## Design System

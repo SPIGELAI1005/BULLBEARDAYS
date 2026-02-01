@@ -26,9 +26,9 @@ const OfflineIndicator = () => {
         </>
       ) : (
         <>
-          <WifiOff className="w-4 h-4 text-amber-500" />
+          <WifiOff className="w-4 h-4 text-amber-700 dark:text-amber-500" />
           <div className="text-sm">
-            <span className="text-amber-500 font-medium">Offline Mode</span>
+            <span className="text-amber-700 dark:text-amber-500 font-medium">Offline Mode</span>
             {cachedAnalyses.length > 0 && (
               <span className="text-muted-foreground ml-2">
                 • Viewing cached data ({getCacheAge()})

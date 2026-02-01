@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FileText, Shield, Lock, BookOpen, Keyboard } from "lucide-react";
+import { FileText, Shield, Lock, BookOpen, Keyboard, RefreshCw } from "lucide-react";
 
 interface FooterProps {
   onShortcutsClick?: () => void;
@@ -14,16 +14,22 @@ const Footer = ({ onShortcutsClick }: FooterProps) => {
       description: "Terms and conditions"
     },
     {
-      title: "Risk Disclosure",
-      href: "/risk-disclosure",
-      icon: Shield,
-      description: "Risk information"
-    },
-    {
       title: "Privacy Policy",
       href: "/privacy",
       icon: Lock,
       description: "Privacy and data protection"
+    },
+    {
+      title: "Refund Policy",
+      href: "/refund-policy",
+      icon: RefreshCw,
+      description: "Refunds and cancellations"
+    },
+    {
+      title: "Risk Disclosure",
+      href: "/risk-disclosure",
+      icon: Shield,
+      description: "Risk information"
     },
     {
       title: "Methodology",
@@ -36,7 +42,7 @@ const Footer = ({ onShortcutsClick }: FooterProps) => {
   return (
     <footer className="border-t border-border bg-background/50 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 py-8 md:px-6 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 md:gap-8 mb-6 md:mb-8">
           {footerLinks.map((link) => {
             const Icon = link.icon;
             return (

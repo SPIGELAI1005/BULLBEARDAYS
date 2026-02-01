@@ -27,7 +27,7 @@ const Methodology = () => {
             <h1 className="text-3xl font-bold text-foreground">Methodology</h1>
           </div>
           
-          <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground">
+          <div className="prose dark:prose-invert max-w-none space-y-6 text-muted-foreground">
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-3">Overview</h2>
               <p>

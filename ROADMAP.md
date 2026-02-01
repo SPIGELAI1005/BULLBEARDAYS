@@ -4,19 +4,19 @@ overview: Refactor the app from BUY/SELL “signals” into two-sided bull/bear 
 todos:
   - id: product-guardrails
     content: Rewrite prompts/UI from BUY/SELL to bull/bear scenarios + confidenceScore (no profit probability), update disclaimers and export footer
-    status: pending
+    status: completed
   - id: first-class-inputs
     content: Add InstrumentSelector + TimeframeSelector and persist selected strategy/timeframe/instrument with each analysis
-    status: pending
+    status: completed
   - id: api-contract
     content: Update analyze-chart request/response contract to accept (strategy,timeframe,instrument) and return structured bullScenario/bearScenario + trendBias
-    status: pending
+    status: completed
   - id: schema-updates
     content: Add DB columns (strategy/timeframe/instrument/bias/confidence + scenario JSON) and optional append-only analysis_events for auditability
-    status: pending
+    status: completed
   - id: refactor-types-state
     content: Unify Analysis types and refactor Index.tsx into smaller components/hooks for maintainability
-    status: pending
+    status: in_progress
   - id: robust-validation
     content: Add Zod validation for edge function responses + improved error handling and image readability checks
     status: pending
@@ -167,3 +167,9 @@ For a public SaaS you’ll want a slightly more structured schema (not just `sig
 - Beautiful bull/bear iconography (custom SVGs + consistent usage)
 - Export-only sharing (share card + PDF) with method/timestamp/disclaimer footer
 - Safer language everywhere (no buy/sell commands, no “chance of profit”)
+
+---
+
+## Status (single source of truth)
+
+For active progress tracking, see `ROADMAP-EXECUTION-PLAN.md`. This document describes the intended product direction and architecture, but the tracker is authoritative.

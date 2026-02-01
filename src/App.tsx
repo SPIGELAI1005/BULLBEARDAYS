@@ -9,13 +9,17 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { CurrencyProvider } from "@/hooks/useCurrency";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { DisclaimerGate, DisclaimerExitScreen } from "@/components/DisclaimerGate";
+import CookieConsent from "@/components/CookieConsent";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
 import RiskDisclosure from "./pages/RiskDisclosure";
 import Privacy from "./pages/Privacy";
+import RefundPolicy from "./pages/RefundPolicy";
 import Methodology from "./pages/Methodology";
 import Pricing from "./pages/Pricing";
+import PricingConditions from "./pages/PricingConditions";
+import Billing from "./pages/Billing";
 import Signup from "./pages/Signup";
 
 const queryClient = new QueryClient({
@@ -45,26 +49,30 @@ function App() {
               <TooltipProvider>
               <Toaster />
               <Sonner />
-              <div className={isGateOpen ? "pointer-events-none select-none blur-md brightness-90" : ""}>
-                <BrowserRouter>
+              <BrowserRouter>
+                <div className={isGateOpen ? "pointer-events-none select-none blur-md brightness-90" : ""}>
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/risk-disclosure" element={<RiskDisclosure />} />
                     <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/refund-policy" element={<RefundPolicy />} />
                     <Route path="/methodology" element={<Methodology />} />
                     <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/pricing-conditions" element={<PricingConditions />} />
+                    <Route path="/billing" element={<Billing />} />
                     <Route path="/signup" element={<Signup />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </BrowserRouter>
-              </div>
-              <DisclaimerGate
-                isOpen={isGateOpen}
-                onAgree={() => setHasAcceptedDisclaimer(true)}
-                onExit={() => setHasExited(true)}
-              />
+                </div>
+                <DisclaimerGate
+                  isOpen={isGateOpen}
+                  onAgree={() => setHasAcceptedDisclaimer(true)}
+                  onExit={() => setHasExited(true)}
+                />
+                <CookieConsent />
+              </BrowserRouter>
               </TooltipProvider>
             </CurrencyProvider>
           </ThemeProvider>

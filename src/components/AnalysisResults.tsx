@@ -75,13 +75,13 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
     : isLegacyAnalysis(analysis)
     ? {
         thesis: analysis.chartAnalysis || "Potential bullish setup based on technical analysis",
-        evidence: analysis.reasoning.bullish,
+        evidence: analysis.reasoning?.bullish ?? [],
         keyLevels: {
           support: [],
           resistance: analysis.takeProfit ? [analysis.takeProfit] : []
         },
         invalidation: analysis.stopLoss || "N/A",
-        riskNotes: analysis.reasoning.bearish
+        riskNotes: analysis.reasoning?.bearish ?? []
       }
     : null;
 
@@ -90,13 +90,13 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
     : isLegacyAnalysis(analysis)
     ? {
         thesis: analysis.marketSentiment || "Potential bearish risks based on market conditions",
-        evidence: analysis.reasoning.bearish,
+        evidence: analysis.reasoning?.bearish ?? [],
         keyLevels: {
           support: analysis.stopLoss ? [analysis.stopLoss] : [],
           resistance: []
         },
         invalidation: analysis.takeProfit || "N/A",
-        riskNotes: analysis.reasoning.bullish
+        riskNotes: analysis.reasoning?.bullish ?? []
       }
     : null;
 

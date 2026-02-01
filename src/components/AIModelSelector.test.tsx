@@ -58,7 +58,6 @@ describe("AIModelSelector", () => {
     );
 
     // When multiple models are selected, reference model section should appear
-    const referenceSection = screen.queryByText(/reference/i);
-    expect(referenceSection).toBeInTheDocument();
+    expect(screen.getByText("Reference")).toBeInTheDocument();
   });
 });

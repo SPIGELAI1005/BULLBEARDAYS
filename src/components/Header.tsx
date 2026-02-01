@@ -93,10 +93,10 @@ const Header = () => {
             </Link>
 
             <nav className="hidden md:flex items-center gap-8 shrink-0">
-              <a href="/#analyze" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Analyze</a>
-              <a href="/#performance" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Performance</a>
-              <a href="/#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</a>
-              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <a href="/#analyze" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Analyze</a>
+              <a href="/#performance" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Performance</a>
+              <a href="/#about" className="text-sm text-foreground/90 hover:text-foreground transition-colors">About</a>
+              <Link to="/pricing" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Pricing</Link>
             </nav>
 
             <div className="hidden md:flex items-center gap-3 shrink-0">

@@ -183,7 +183,22 @@ export function isScenarioAnalysis(analysis: UnifiedAnalysis): analysis is Scena
  * Type guard to check if analysis is legacy format
  */
 export function isLegacyAnalysis(analysis: UnifiedAnalysis): analysis is LegacyAnalysis {
-  return 'signal' in analysis && 'probability' in analysis && !('trendBias' in analysis);
+  const maybe = analysis as unknown as {
+    signal?: unknown;
+    probability?: unknown;
+    trendBias?: unknown;
+    reasoning?: unknown;
+  };
+
+  return (
+    typeof maybe.signal === "string" &&
+    typeof maybe.probability === "number" &&
+    !("trendBias" in (analysis as object)) &&
+    !!maybe.reasoning &&
+    typeof maybe.reasoning === "object" &&
+    Array.isArray((maybe.reasoning as { bullish?: unknown }).bullish) &&
+    Array.isArray((maybe.reasoning as { bearish?: unknown }).bearish)
+  );
 }
 
 /**
@@ -265,8 +280,8 @@ export interface AnalysisRecord {
   // New scenario fields (Phase 1+)
   trend_bias?: string;
   confidence_score?: number;
-  bull_scenario?: Record<string, any>; // JSON
-  bear_scenario?: Record<string, any>; // JSON
+  bull_scenario?: Record<string, unknown>; // JSON
+  bear_scenario?: Record<string, unknown>; // JSON
   strategy?: string;
 
   // Timeframe tracking

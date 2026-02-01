@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Upload chart image to private storage
+ * Returns the storage path (not a public URL)
+ */
 export const uploadChartImage = async (
   base64Image: string,
   userId: string,
@@ -16,10 +20,10 @@ export const uploadChartImage = async (
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: "image/png" });
 
-    // Generate unique filename
+    // Generate unique filename with user folder
     const filename = `${userId}/${analysisId || Date.now()}.png`;
 
-    // Upload to storage
+    // Upload to private storage
     const { data, error } = await supabase.storage
       .from("chart-images")
       .upload(filename, blob, {
@@ -32,29 +36,58 @@ export const uploadChartImage = async (
       return null;
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("chart-images")
-      .getPublicUrl(data.path);
-
-    return urlData.publicUrl;
+    // Return path only (not public URL)
+    return data.path;
   } catch (error) {
     console.error("Failed to upload chart image:", error);
     return null;
   }
 };
 
-export const deleteChartImage = async (url: string): Promise<boolean> => {
+/**
+ * Get a signed URL for a chart image
+ * Signed URLs expire after the specified time (default 1 hour)
+ */
+export const getChartImageUrl = async (
+  path: string,
+  expiresIn: number = 3600 // 1 hour in seconds
+): Promise<string | null> => {
   try {
-    // Extract path from URL
-    const urlParts = url.split("/chart-images/");
-    if (urlParts.length !== 2) return false;
+    if (!path) return null;
 
-    const path = urlParts[1];
+    const { data, error } = await supabase.storage
+      .from("chart-images")
+      .createSignedUrl(path, expiresIn);
+
+    if (error) {
+      console.error("Get signed URL error:", error);
+      return null;
+    }
+
+    return data.signedUrl;
+  } catch (error) {
+    console.error("Failed to get chart image URL:", error);
+    return null;
+  }
+};
+
+/**
+ * Delete a chart image from storage
+ */
+export const deleteChartImage = async (path: string): Promise<boolean> => {
+  try {
+    if (!path) return false;
+
+    // If path is a full URL, extract the path
+    let filePath = path;
+    if (path.includes("/chart-images/")) {
+      const urlParts = path.split("/chart-images/");
+      filePath = urlParts[1];
+    }
 
     const { error } = await supabase.storage
       .from("chart-images")
-      .remove([path]);
+      .remove([filePath]);
 
     if (error) {
       console.error("Delete error:", error);
@@ -68,7 +101,12 @@ export const deleteChartImage = async (url: string): Promise<boolean> => {
   }
 };
 
-export const getChartImageUrl = (path: string): string => {
+/**
+ * Get public URL for a chart image (DEPRECATED - use getChartImageUrl instead)
+ * This function is kept for backward compatibility but should not be used
+ * for new code as it returns public URLs for private storage.
+ */
+export const getPublicChartImageUrl = (path: string): string => {
   const { data } = supabase.storage.from("chart-images").getPublicUrl(path);
   return data.publicUrl;
 };

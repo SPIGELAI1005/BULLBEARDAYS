@@ -27,7 +27,7 @@ const RiskDisclosure = () => {
             <h1 className="text-3xl font-bold text-foreground">Risk Disclosure</h1>
           </div>
           
-          <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground">
+          <div className="prose dark:prose-invert max-w-none space-y-6 text-muted-foreground">
             <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 mb-6">
               <p className="text-sm text-foreground font-medium">
                 <strong>Important:</strong> Trading and investing involve substantial risk of loss. You should carefully consider whether trading is suitable for you in light of your circumstances, knowledge, and financial resources.

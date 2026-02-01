@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Check, Sparkles, Info, ArrowLeft } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Check, Sparkles, Info, ArrowLeft, Loader2, ChevronDown } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CandlestickBackground from "@/components/CandlestickBackground";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Accordion,
   AccordionContent,
@@ -12,6 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
+  FREE_PLAN,
   FOUNDER_PLAN,
   TIER_PLANS,
   getSignupUrl,
@@ -21,6 +25,7 @@ import {
   type PricingPlan,
   type BillingPeriod,
 } from "@/lib/pricing";
+import { isAuthRequiredError, startCheckout } from "@/lib/billing/startCheckout";
 import {
   Table,
   TableBody,
@@ -41,9 +46,15 @@ const BRAND = {
 function PricingCard({
   plan,
   billingPeriod,
+  ctaLabel,
+  isLoading,
+  onCtaClick,
 }: {
   plan: PricingPlan;
   billingPeriod: BillingPeriod;
+  ctaLabel: string;
+  isLoading: boolean;
+  onCtaClick: (planId: PlanId) => void;
 }) {
   const isPro = plan.id === "pro";
   const hasYearly = PLANS_WITH_YEARLY.includes(plan.id as PlanId);
@@ -117,10 +128,21 @@ function PricingCard({
       {plan.footnote && (
         <p className="text-xs text-muted-foreground mb-4">{plan.footnote}</p>
       )}
+      <div className="mb-2 flex items-center justify-center">
+        <Link
+          to={`/pricing-conditions#${plan.id}`}
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+        >
+          See Conditions
+        </Link>
+      </div>
       <Button
-        asChild
+        type="button"
+        onClick={() => onCtaClick(plan.id as PlanId)}
+        disabled={isLoading}
         className={cn(
           "w-full font-semibold rounded-xl transition-all duration-300 motion-reduce:transition-none",
+          "h-auto min-h-[44px] px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs lg:text-sm leading-snug whitespace-normal break-words text-center",
           "hover:brightness-110 hover:shadow-[0_0_24px_-6px_rgba(216,27,92,0.5)]"
         )}
         style={{
@@ -128,7 +150,14 @@ function PricingCard({
           color: "white",
         }}
       >
-        <Link to={getSignupUrl(plan.id as PlanId)}>{plan.cta}</Link>
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            Processing…
+          </>
+        ) : (
+          ctaLabel
+        )}
       </Button>
     </article>
   );
@@ -161,15 +190,58 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
 ];
 
+const FAQ_MORE_ITEMS: { q: string; a: string }[] = [
+  {
+    q: "Can I upgrade or downgrade my plan later?",
+    a: "Yes. You can change plans at any time. Upgrades take effect immediately (you get the higher limits/features), and downgrades typically take effect at the next billing reset. Any plan-specific limits reset on the schedule shown on the Pricing page.",
+  },
+  {
+    q: "Can I choose which AI provider is used for my analyses?",
+    a: "It depends on your plan. Free and Week Pass let you pick one reference AI. Higher tiers unlock multiple providers and (where available) ensemble mode. Availability can vary by region and provider status.",
+  },
+  {
+    q: "How do online context pulls work?",
+    a: "A context pull is counted when the app fetches external market/context data during an analysis. Your plan includes a limited number of pulls per period (e.g. per 7 days or per month). When you reach the limit, analyses still work but must run without online context until your next reset or upgrade.",
+  },
+  {
+    q: "What’s the difference between private links and public share links?",
+    a: "Private links are designed for sharing with someone who has an account and is logged in. Public share links are accessible without logging in and include extra context like methodology and timestamps. The exact share options depend on your plan tier.",
+  },
+  {
+    q: "What does “watermarked + disclaimer” mean for share-cards?",
+    a: "On Free, downloaded share-cards include a watermark and a disclaimer footer to avoid misuse. Paid tiers remove the watermark wording on the pricing page and may unlock richer sharing options, while keeping compliance disclaimers where required.",
+  },
+  {
+    q: "Is the Founder plan a subscription?",
+    a: "No. Founder Lifetime (Limited) is a one-time purchase. It grants access according to the terms shown in Pricing Conditions, including monthly resets for usage limits and the ability to evolve the service over time (with advance communication).",
+  },
+  {
+    q: "How is the Founder “seats remaining” counter calculated?",
+    a: "Seats remaining is computed from current Founder access records and then displayed as remaining/total. The count may lag briefly due to payment confirmation timing or backend processing, but it is intended to reflect availability as accurately as possible.",
+  },
+  {
+    q: "Are prices including VAT?",
+    a: "EU prices shown are intended to be VAT-inclusive. Taxes may still vary depending on location and applicable regulations. Your final amount is shown during checkout before you confirm payment.",
+  },
+  {
+    q: "What happens if the AI or the service is temporarily unavailable?",
+    a: "Occasional outages can happen due to provider or infrastructure issues. If you experience errors, please report them via the app so we can investigate. For extended disruptions, we may evaluate remedies in line with the Pricing Conditions and Refund Policy.",
+  },
+  {
+    q: "How do I report a bug or request a feature?",
+    a: "Use the in-app support/reporting options (or contact the support channel listed in the app). Include the timeframe, symbol/timeframe, and any error message. We use this information to reproduce issues and improve model prompts, stability, and UX.",
+  },
+];
+
 function PlanComparisonTable() {
-  const headers = ["", ...TIER_PLANS.map((p) => p.name)];
-  const rows: [string, string, string, string, string][] = [
-    ["Analyses", "30 / 7d", "200 / mo", "700 / mo", "2000 / mo"],
-    ["Context pulls", "5 / 7d", "50 / mo", "200 / mo", "600 / mo"],
-    ["AI providers", "1", "1–2", "All (3)", "All (3)"],
-    ["Ensemble mode", "—", "—", "✓", "✓"],
-    ["Public share links", "—", "—", "✓", "✓"],
-    ["Backtest candles", "—", "—", "1000", "1000"],
+  const headers = ["", FREE_PLAN.name, ...TIER_PLANS.map((p) => p.name)];
+  const rows: string[][] = [
+    ["Analyses", "10 / 7d", "30 / 7d", "200 / mo", "700 / mo", "2000 / mo"],
+    ["Context pulls", "5 / 7d", "5 / 7d", "50 / mo", "200 / mo", "600 / mo"],
+    ["AI providers", "1", "1", "1–2", "All (3)", "All (3)"],
+    ["Ensemble mode", "—", "—", "—", "✓", "✓"],
+    ["Public share links", "—", "—", "—", "✓", "✓"],
+    ["Backtest candles", "—", "—", "—", "1000", "1000"],
   ];
   return (
     <div className="rounded-2xl overflow-hidden glass-panel-subtle">
@@ -215,10 +287,105 @@ function PlanComparisonTable() {
 }
 
 export default function Pricing() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [isCheckingOutByPlanId, setIsCheckingOutByPlanId] = useState<Record<string, boolean>>({});
+  const isFounderCheckingOut = isCheckingOutByPlanId.founder === true;
+  const [isShowingMoreFaq, setIsShowingMoreFaq] = useState(false);
+  const [founderSeats, setFounderSeats] = useState<{ total: number; remaining: number }>({
+    total: 300,
+    remaining: 300,
+  });
+
+  const founderSeatsLabel = useMemo(() => {
+    return `${founderSeats.remaining}/${founderSeats.total}`;
+  }, [founderSeats]);
+
+  const handleCtaClick = useCallback(
+    async (planId: PlanId) => {
+      if (isAuthLoading) return;
+
+      if (!user) {
+        toast({
+          title: "Create an account first to continue",
+          description:
+            planId === "free"
+              ? "Sign in to start on the Free plan."
+              : "Sign in to continue to Stripe Checkout.",
+          variant: "destructive",
+        });
+        navigate(getSignupUrl(planId));
+        return;
+      }
+
+      if (planId === "free") {
+        navigate("/#analyze");
+        return;
+      }
+
+      const effectiveBillingPeriod =
+        billingPeriod === "yearly" && PLANS_WITH_YEARLY.includes(planId) ? "yearly" : "monthly";
+
+      setIsCheckingOutByPlanId((prev) => ({ ...prev, [planId]: true }));
+      try {
+        await startCheckout(planId, effectiveBillingPeriod);
+      } catch (error) {
+        if (isAuthRequiredError(error)) {
+          toast({
+            title: "Sign in required",
+            description: "Please sign in again to continue to checkout.",
+            variant: "destructive",
+          });
+          navigate(getSignupUrl(planId));
+          return;
+        }
+
+        toast({
+          title: "Unable to start checkout",
+          description: error instanceof Error ? error.message : "Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingOutByPlanId((prev) => ({ ...prev, [planId]: false }));
+      }
+    },
+    [billingPeriod, isAuthLoading, navigate, toast, user]
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadFounderSeats() {
+      try {
+        const rpc = (supabase as unknown as {
+          rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+        }).rpc;
+
+        const { data, error } = await rpc("get_founder_seats");
+        if (error) return;
+
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row || typeof row !== "object") return;
+
+        const r = row as Partial<{ total_seats: unknown; remaining_seats: unknown }>;
+        if (typeof r.total_seats !== "number" || typeof r.remaining_seats !== "number") return;
+
+        if (!isCancelled) setFounderSeats({ total: r.total_seats, remaining: r.remaining_seats });
+      } catch {
+        // ignore
+      }
+    }
+
+    void loadFounderSeats();
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -313,78 +480,106 @@ export default function Pricing() {
               key={plan.id}
               plan={plan}
               billingPeriod={billingPeriod}
+              ctaLabel={plan.cta}
+              isLoading={!!isCheckingOutByPlanId[plan.id]}
+              onCtaClick={handleCtaClick}
             />
           ))}
         </section>
 
-        {/* Founder Lifetime */}
+        {/* Free + Founder */}
         <section
           className="mb-20"
-          aria-labelledby="founder-title"
+          aria-label="Free and Founder plans"
         >
-          <div
-            className={cn(
-              "relative rounded-2xl p-8 max-w-3xl mx-auto overflow-hidden",
-              "bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent",
-              "backdrop-blur-xl border-2 border-amber-400/40",
-              "shadow-[0_0_0_1px_rgba(251,191,36,0.2)_inset,0_0_60px_-12px_rgba(245,158,11,0.35),0_0_100px_-24px_rgba(251,191,36,0.2)]",
-              "transition-all duration-300 motion-reduce:transition-none",
-              "hover:shadow-[0_0_0_1px_rgba(251,191,36,0.3)_inset,0_0_72px_-12px_rgba(245,158,11,0.45),0_0_120px_-20px_rgba(251,191,36,0.25)]",
-              "hover:border-amber-400/50"
-            )}
-          >
-            {/* Golden shine sweep */}
-            <div
-              className="absolute inset-0 pointer-events-none opacity-30 animate-founder-shine motion-reduce:animate-none"
-              style={{
-                background: "linear-gradient(105deg, transparent 0%, transparent 40%, rgba(251,191,36,0.15) 50%, transparent 60%, transparent 100%)",
-                backgroundSize: "200% 100%",
-              }}
-              aria-hidden
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 max-w-6xl mx-auto">
+            <PricingCard
+              plan={FREE_PLAN}
+              billingPeriod={billingPeriod}
+              ctaLabel={FREE_PLAN.cta}
+              isLoading={false}
+              onCtaClick={handleCtaClick}
             />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-5 w-5 text-amber-400" aria-hidden />
-                <h2 id="founder-title" className="text-xl font-semibold text-foreground">
-                  {FOUNDER_PLAN.name}
-                </h2>
-              </div>
-              <div className="flex flex-wrap items-baseline gap-2 mb-4">
-                <span className="text-3xl font-bold tabular-nums bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                  {FOUNDER_PLAN.price}
-                </span>
-                <span className="text-muted-foreground">one-time</span>
-              </div>
-              <ul className="space-y-2 mb-6" role="list">
-                {FOUNDER_PLAN.features.map((f, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-muted-foreground">
-                    <Check
-                      className="h-4 w-4 shrink-0 mt-0.5 text-amber-400"
-                      aria-hidden
-                    />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              {FOUNDER_PLAN.footnote && (
-                <p className="text-xs text-muted-foreground mb-4">
-                  {FOUNDER_PLAN.footnote}
-                </p>
+
+            <div
+              className={cn(
+                "relative rounded-2xl p-6 overflow-hidden h-full",
+                "bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent",
+                "backdrop-blur-xl border-2 border-amber-400/40",
+                "shadow-[0_0_0_1px_rgba(251,191,36,0.2)_inset,0_0_60px_-12px_rgba(245,158,11,0.35),0_0_100px_-24px_rgba(251,191,36,0.2)]",
+                "transition-all duration-300 motion-reduce:transition-none",
+                "hover:shadow-[0_0_0_1px_rgba(251,191,36,0.3)_inset,0_0_72px_-12px_rgba(245,158,11,0.45),0_0_120px_-20px_rgba(251,191,36,0.25)]",
+                "hover:border-amber-400/50"
               )}
-              <p className="text-xs text-muted-foreground mb-6">
-                Limited seats. Counter placeholder — availability may vary.
-              </p>
-              <Button
-                asChild
-                className={cn(
-                  "font-semibold rounded-xl transition-all duration-300",
-                  "bg-gradient-to-r from-amber-500 to-amber-600 text-white",
-                  "hover:from-amber-400 hover:to-amber-500",
-                  "hover:shadow-[0_0_24px_-6px_rgba(245,158,11,0.5)]"
-                )}
-              >
-                <Link to={getSignupUrl("founder")}>{FOUNDER_PLAN.cta}</Link>
-              </Button>
+            >
+              {/* Golden shine sweep */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-30 animate-founder-shine motion-reduce:animate-none"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 0%, transparent 40%, rgba(251,191,36,0.15) 50%, transparent 60%, transparent 100%)",
+                  backgroundSize: "200% 100%",
+                }}
+                aria-hidden
+              />
+              <div className="relative flex flex-col h-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-5 w-5 text-amber-400" aria-hidden />
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {FOUNDER_PLAN.name}
+                  </h2>
+                </div>
+                <div className="flex flex-wrap items-baseline gap-2 mb-4">
+                  <span className="text-3xl font-bold tabular-nums bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                    {FOUNDER_PLAN.price}
+                  </span>
+                  <span className="text-muted-foreground">one-time</span>
+                </div>
+                <ul className="flex-1 space-y-2 mb-6" role="list">
+                  {FOUNDER_PLAN.features.map((f, i) => (
+                    <li key={i} className="flex gap-3 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" aria-hidden />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="text-xs text-muted-foreground mb-4">
+                  {FOUNDER_PLAN.footnote && <p>{FOUNDER_PLAN.footnote}</p>}
+                  <p className="mt-1">
+                    Seats remaining:{" "}
+                    <span className="font-medium text-foreground tabular-nums">{founderSeatsLabel}</span>
+                  </p>
+                </div>
+                <div className="mb-2 flex items-center justify-center">
+                  <Link
+                    to="/pricing-conditions#founder"
+                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                  >
+                    See Conditions
+                  </Link>
+                </div>
+                <Button
+                  type="button"
+                  className={cn(
+                    "font-semibold rounded-xl transition-all duration-300",
+                    "h-auto min-h-[44px] px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs lg:text-sm leading-snug whitespace-normal break-words text-center",
+                    "bg-gradient-to-r from-amber-500 to-amber-600 text-white",
+                    "hover:from-amber-400 hover:to-amber-500",
+                    "hover:shadow-[0_0_24px_-6px_rgba(245,158,11,0.5)]"
+                  )}
+                  disabled={isFounderCheckingOut}
+                  onClick={() => void handleCtaClick("founder")}
+                >
+                  {isFounderCheckingOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      Processing…
+                    </>
+                  ) : (
+                    FOUNDER_PLAN.cta
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -402,7 +597,7 @@ export default function Pricing() {
 
         {/* Credits explainer */}
         <section
-          className="glass-panel p-6 mb-20 max-w-3xl mx-auto"
+          className="rounded-xl border border-border bg-muted/20 p-6 mb-20 max-w-3xl mx-auto"
           aria-labelledby="credits-title"
         >
           <div className="flex items-center gap-2 mb-4">
@@ -443,6 +638,45 @@ export default function Pricing() {
               </AccordionItem>
             ))}
           </Accordion>
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+                className="w-full rounded-xl bg-muted/20 hover:bg-muted/30 text-foreground"
+              onClick={() => setIsShowingMoreFaq((v) => !v)}
+              aria-expanded={isShowingMoreFaq}
+              aria-controls="faq-more"
+            >
+              Further Questions and Answers
+              <ChevronDown
+                className={cn(
+                    "ml-2 h-4 w-4 transition-transform duration-200",
+                  isShowingMoreFaq && "rotate-180"
+                )}
+                aria-hidden
+              />
+            </Button>
+            {isShowingMoreFaq && (
+              <div id="faq-more" className="mt-2">
+                <Accordion type="single" collapsible className="space-y-2">
+                  {FAQ_MORE_ITEMS.map((item, i) => (
+                    <AccordionItem
+                      key={i}
+                      value={`faq-more-${i}`}
+                      className="rounded-xl border border-border border-b-0 bg-muted/20 px-4 data-[state=open]:bg-muted/30"
+                    >
+                      <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline py-4">
+                        {item.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-sm pb-4">
+                        {item.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+            )}
+          </div>
         </section>
 
         </main>

@@ -97,9 +97,9 @@ const TradingStrategySelector = ({ selectedStrategy, onStrategyChange }: Trading
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'High': return 'text-bearish';
-      case 'Medium-High': return 'text-orange-400';
+      case 'Medium-High': return 'text-orange-700 dark:text-orange-400';
       case 'Medium': return 'text-accent';
-      case 'Medium-Low': return 'text-lime-400';
+      case 'Medium-Low': return 'text-lime-700 dark:text-lime-400';
       case 'Low': return 'text-bullish';
       default: return 'text-muted-foreground';
     }

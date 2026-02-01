@@ -12,9 +12,9 @@ function DisclaimerGate({ isOpen, onAgree, onExit }: DisclaimerGateProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/35 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/60 dark:bg-background/35 backdrop-blur-xl">
       <CandlestickBackground tone="black" opacity={0.5} />
-      <div className="max-w-2xl w-[92%] p-8 md:p-10 text-center shadow-2xl border border-yellow-300/50 bg-yellow-200/10 backdrop-blur-2xl">
+      <div className="glass-panel max-w-2xl w-[92%] p-8 md:p-10 text-center shadow-2xl border border-amber-500/25 dark:border-amber-400/25">
         <div className="flex flex-col items-center gap-4">
           <img
             src={logo}
@@ -22,15 +22,15 @@ function DisclaimerGate({ isOpen, onAgree, onExit }: DisclaimerGateProps) {
             className="h-24 w-auto"
             loading="eager"
           />
-          <div className="text-xs tracking-[0.2em] text-black/90 -mt-3">
+          <div className="text-xs tracking-[0.2em] text-muted-foreground -mt-3">
             bullbeardays.com
           </div>
-          <h1 className="text-xl md:text-2xl font-semibold text-foreground underline decoration-yellow-300/70 underline-offset-4">
+          <h1 className="text-xl md:text-2xl font-semibold text-foreground underline decoration-amber-500/70 dark:decoration-amber-400/70 underline-offset-4">
             Important Disclaimer
           </h1>
         </div>
 
-        <p className="mt-5 text-[0.72rem] md:text-[0.81rem] text-yellow-300 leading-relaxed">
+        <p className="mt-5 text-[0.72rem] md:text-[0.81rem] text-muted-foreground leading-relaxed">
           <span className="block">
             Scenario analysis on this platform is provided solely for education and general information.
           </span>

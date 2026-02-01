@@ -1,10 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCors, corsResponse } from "../_shared/cors.ts";
+import { checkRateLimit, rateLimitExceededResponse } from "../_shared/rateLimiter.ts";
 
 interface MarketData {
   symbol: string;
@@ -22,8 +19,10 @@ const CRYPTO_PAIRS = ['bitcoin', 'ethereum', 'solana'];
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes cache
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS
+  const cors = handleCors(req);
+  if (cors.response) {
+    return cors.response;
   }
 
   try {
@@ -37,7 +36,8 @@ serve(async (req) => {
     // Optional authentication - rate limit authenticated users
     const authHeader = req.headers.get('Authorization');
     let userId: string | null = null;
-    
+    let rateLimitHeaders: Record<string, string> = {};
+
     if (authHeader?.startsWith('Bearer ')) {
       const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } }
@@ -45,25 +45,27 @@ serve(async (req) => {
 
       const token = authHeader.replace('Bearer ', '');
       const { data: claimsData } = await supabaseAuth.auth.getClaims(token);
-      
+
       if (claimsData?.claims?.sub) {
         userId = claimsData.claims.sub as string;
         console.log('Authenticated user:', userId);
 
         // Rate limiting for authenticated users (60 market data requests per minute)
-        const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
-          p_user_id: userId,
-          p_endpoint: 'market-data',
-          p_max_requests: 60,
-          p_window_minutes: 1
-        });
+        const rateLimitResult = await checkRateLimit(supabase, userId, 'market-data');
 
-        if (!rateLimitOk) {
-          return new Response(
-            JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        if (!rateLimitResult.allowed) {
+          return corsResponse(
+            rateLimitExceededResponse(rateLimitResult, cors.origin),
+            {
+              status: 429,
+              origin: cors.origin,
+              headers: rateLimitResult.headers
+            }
           );
         }
+
+        // Store rate limit headers for successful response
+        rateLimitHeaders = rateLimitResult.headers;
       }
     }
     
@@ -78,9 +80,13 @@ serve(async (req) => {
     if (cachedData && cachedData.length >= 6) {
       console.log('Cache hit - returning cached market data');
       const marketData = cachedData.map((item: { data: MarketData }) => item.data);
-      return new Response(
-        JSON.stringify({ data: marketData, timestamp: new Date().toISOString(), cached: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return corsResponse(
+        { data: marketData, timestamp: new Date().toISOString(), cached: true },
+        {
+          status: 200,
+          origin: cors.origin,
+          headers: rateLimitHeaders
+        }
       );
     }
 
@@ -244,15 +250,19 @@ serve(async (req) => {
     await Promise.all(cachePromises);
     console.log('Cached market data for', marketData.length, 'symbols');
 
-    return new Response(
-      JSON.stringify({ data: marketData, timestamp: new Date().toISOString(), cached: false }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return corsResponse(
+      { data: marketData, timestamp: new Date().toISOString(), cached: false },
+      {
+        status: 200,
+        origin: cors.origin,
+        headers: rateLimitHeaders
+      }
     );
   } catch (error) {
     console.error("Error in market-data function:", error);
-    return new Response(
-      JSON.stringify({ error: "An error occurred while fetching market data. Please try again later." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return corsResponse(
+      { error: "An error occurred while fetching market data. Please try again later." },
+      { status: 500, origin: cors.origin }
     );
   }
 });

@@ -8,9 +8,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 const Hero = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  const line1Ref = useRef<HTMLDivElement>(null);
-  const line2Ref = useRef<HTMLDivElement>(null);
-  const line3Ref = useRef<HTMLDivElement>(null);
+  const line1Ref = useRef<HTMLSpanElement>(null);
+  const line2Ref = useRef<HTMLSpanElement>(null);
+  const line3Ref = useRef<HTMLSpanElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
   const stat1Ref = useRef<HTMLDivElement>(null);
@@ -30,17 +30,31 @@ const Hero = () => {
 
     if (!section || !line1 || !line2 || !line3 || !description || !stats || !stat1 || !stat2 || !stat3) return;
 
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     // Set initial states
-    gsap.set([line1, line2, line3], { 
+    if (prefersReducedMotion) {
+      gsap.set([line1, line2, line3], { clipPath: "inset(0 0 0 0)", opacity: 1 });
+      gsap.set([description, stats], { opacity: 1, y: 0 });
+      stat1.textContent = "3";
+      stat2.textContent = "<30s";
+      stat3.textContent = "24/7";
+      return;
+    }
+
+    gsap.set([line1, line2, line3], {
       clipPath: "inset(0 100% 0 0)",
-      opacity: 1 
+      opacity: 1,
     });
-    gsap.set(line2, { 
-      clipPath: "inset(0 0 0 100%)" 
+    gsap.set(line2, {
+      clipPath: "inset(0 0 0 100%)",
     });
-    gsap.set([description, stats], { 
-      opacity: 0, 
-      y: 20 
+    gsap.set([description, stats], {
+      opacity: 0,
+      y: 20,
     });
 
     // Counter objects for animation
@@ -122,7 +136,8 @@ const Hero = () => {
 
     // Cleanup
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      tl.scrollTrigger?.kill();
+      tl.kill();
     };
   }, []);
 
@@ -141,32 +156,80 @@ const Hero = () => {
           <AnimatedLogo />
         </div>
 
-        {/* Headline with scroll-triggered typewriter animation */}
-        <div className="mb-4 md:mb-6 space-y-4 md:space-y-6">
+        {/* Headline with scroll-triggered "write-on" animation */}
+        <div className="relative mb-4 md:mb-6">
+          {/* Always-visible background anchors: BULL / BEAR / DAYS */}
+          <div
+            aria-hidden
+            className="pointer-events-none select-none absolute inset-0 flex flex-col justify-center gap-6 md:gap-8 opacity-30"
+          >
+            <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-[0.25em] text-bullish/20 text-left">
+              BULL
+            </div>
+            <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-[0.25em] text-bearish/20 text-right">
+              BEAR
+            </div>
+            <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-[0.25em] text-amber-300/20 text-center">
+              DAYS
+            </div>
+          </div>
+
+          <div className="relative space-y-4 md:space-y-6">
           {/* Line 1: Left aligned, reveals left to right */}
           <div 
-            ref={line1Ref}
-            className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground tracking-tight text-left"
+            className="relative text-xl md:text-2xl lg:text-3xl font-bold text-foreground tracking-tight text-left"
           >
-            Some Days are un<span className="text-bullish font-bold">BULL</span>ivable.
+            {/* Base layer: reserve height while anchors stay visible */}
+            <span aria-hidden className="block text-transparent">
+              Some days are unBULLivable,
+            </span>
+            {/* Overlay: scroll-written sentence */}
+            <span
+              ref={line1Ref}
+              className="absolute inset-0 block will-change-[clip-path]"
+            >
+              Some days are un<span className="text-bullish font-bold">BULL</span>ivable,
+            </span>
           </div>
           
           {/* Line 2: Right aligned, reveals right to left */}
           <div 
-            ref={line2Ref}
-            className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground tracking-tight text-right"
+            className="relative text-xl md:text-2xl lg:text-3xl font-bold text-foreground tracking-tight text-right"
           >
-            Other Days are un<span className="text-bearish font-bold">BEAR</span>able.
+            {/* Base layer: reserve height while anchors stay visible */}
+            <span aria-hidden className="block text-transparent">
+              other days are unBEARable,
+            </span>
+            {/* Overlay: scroll-written sentence */}
+            <span
+              ref={line2Ref}
+              className="absolute inset-0 block will-change-[clip-path]"
+            >
+              other days are un<span className="text-bearish font-bold">BEAR</span>able,
+            </span>
           </div>
           
           {/* Line 3: Center aligned */}
           <div 
-            ref={line3Ref}
-            className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground tracking-tight text-center pt-2"
+            className="relative text-xl md:text-2xl lg:text-3xl font-bold text-foreground tracking-tight text-center pt-2"
           >
-            Execute AI-Powered{" "}
-            <span className="text-gradient-gold">Scenario Analysis</span>
-            {" "}in Seconds.
+            {/* Base layer: reserve height while anchors stay visible */}
+            <span aria-hidden className="block text-transparent">
+              ...and there are those DAYS, when you can execute
+              <br />
+              AI-Powered Scenario Analysis in seconds.
+            </span>
+            {/* Overlay: scroll-written sentence */}
+            <span
+              ref={line3Ref}
+              className="absolute inset-0 block will-change-[clip-path]"
+            >
+              ...and there are those{" "}
+              <span className="text-sky-400 font-bold">DAYS</span>, when you can execute{" "}
+              <br />
+              <span className="text-gradient-gold">AI-Powered Scenario Analysis</span> in seconds.
+            </span>
+          </div>
           </div>
         </div>
 

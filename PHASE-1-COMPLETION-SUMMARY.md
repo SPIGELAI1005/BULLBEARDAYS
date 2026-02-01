@@ -6,6 +6,10 @@
 
 ---
 
+## Source of truth
+
+This document is a **historical completion summary** for Phase 1. For current status and next steps, see `ROADMAP-EXECUTION-PLAN.md`.
+
 ## 🎯 Objectives (from ROADMAP.md)
 
 Phase 1: "First-Class Inputs" - Make strategy, timeframe, and instrument **first-class inputs** that flow through the entire system, from UI → API → database.

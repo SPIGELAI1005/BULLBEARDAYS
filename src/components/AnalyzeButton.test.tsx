@@ -6,9 +6,9 @@ describe("AnalyzeButton", () => {
   it("should render the button", () => {
     render(
       <AnalyzeButton
-        onAnalyze={() => {}}
-        isAnalyzing={false}
-        canAnalyze={true}
+        onClick={() => {}}
+        isLoading={false}
+        disabled={false}
       />
     );
 
@@ -19,21 +19,21 @@ describe("AnalyzeButton", () => {
   it("should display loading state when analyzing", () => {
     render(
       <AnalyzeButton
-        onAnalyze={() => {}}
-        isAnalyzing={true}
-        canAnalyze={true}
+        onClick={() => {}}
+        isLoading={true}
+        disabled={false}
       />
     );
 
     expect(screen.getByText(/analyzing/i)).toBeInTheDocument();
   });
 
-  it("should be disabled when canAnalyze is false", () => {
+  it("should be disabled when disabled is true", () => {
     render(
       <AnalyzeButton
-        onAnalyze={() => {}}
-        isAnalyzing={false}
-        canAnalyze={false}
+        onClick={() => {}}
+        isLoading={false}
+        disabled={true}
       />
     );
 
@@ -44,9 +44,9 @@ describe("AnalyzeButton", () => {
   it("should be disabled when analyzing", () => {
     render(
       <AnalyzeButton
-        onAnalyze={() => {}}
-        isAnalyzing={true}
-        canAnalyze={true}
+        onClick={() => {}}
+        isLoading={true}
+        disabled={false}
       />
     );
 
@@ -54,35 +54,35 @@ describe("AnalyzeButton", () => {
     expect(button).toBeDisabled();
   });
 
-  it("should call onAnalyze when clicked", () => {
-    const mockOnAnalyze = vi.fn();
+  it("should call onClick when clicked", () => {
+    const mockOnClick = vi.fn();
     render(
       <AnalyzeButton
-        onAnalyze={mockOnAnalyze}
-        isAnalyzing={false}
-        canAnalyze={true}
+        onClick={mockOnClick}
+        isLoading={false}
+        disabled={false}
       />
     );
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
 
-    expect(mockOnAnalyze).toHaveBeenCalledTimes(1);
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
-  it("should not call onAnalyze when disabled", () => {
-    const mockOnAnalyze = vi.fn();
+  it("should not call onClick when disabled", () => {
+    const mockOnClick = vi.fn();
     render(
       <AnalyzeButton
-        onAnalyze={mockOnAnalyze}
-        isAnalyzing={false}
-        canAnalyze={false}
+        onClick={mockOnClick}
+        isLoading={false}
+        disabled={true}
       />
     );
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
 
-    expect(mockOnAnalyze).not.toHaveBeenCalled();
+    expect(mockOnClick).not.toHaveBeenCalled();
   });
 });

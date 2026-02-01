@@ -21,7 +21,7 @@ const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
 
   if (compact) {
     return (
-      <div className="text-xs text-muted-foreground text-center py-2 border-t border-border/50">
+      <div className="text-xs text-foreground/80 text-center py-2 border-t border-border/50">
         <span className="inline-flex items-center gap-1">
           <Info className="h-3 w-3" />
           Educational purposes only • Not financial advice
@@ -37,16 +37,18 @@ const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
     <Alert
       className={`
         disclaimer-banner
-        ${isHeader ? "rounded-xl border border-amber-500/40 shadow-sm" : ""}
-        ${isFooter ? "rounded-xl border border-amber-500/40 mt-8" : ""}
-        bg-amber-500/10 text-foreground
+        ${isHeader ? "rounded-xl shadow-sm" : ""}
+        ${isFooter ? "rounded-xl mt-8" : ""}
+        backdrop-blur-xl
+        bg-background/70 dark:bg-background/45 text-foreground
+        border border-amber-500/25 dark:border-amber-400/20
       `}
     >
       <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-300 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
-          <AlertDescription className="text-sm">
-            <strong className="font-semibold">Important Disclaimer:</strong>{" "}
+          <AlertDescription className="text-sm leading-relaxed text-foreground/90">
+            <strong className="font-semibold text-foreground">Important Disclaimer:</strong>{" "}
             This platform provides scenario analysis for educational and
             informational purposes only. It is not financial advice, investment
             advice, trading advice, or a recommendation to buy or sell any
@@ -58,7 +60,7 @@ const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
         {variant === "dismissible" && (
           <button
             onClick={() => setIsDismissed(true)}
-            className="flex-shrink-0 p-1 hover:bg-muted/50 rounded transition-colors"
+            className="flex-shrink-0 p-1 rounded transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label="Dismiss disclaimer"
           >
             <X className="h-4 w-4" />

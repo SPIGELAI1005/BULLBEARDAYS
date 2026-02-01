@@ -6,22 +6,44 @@ This document maps the ROADMAP.md requirements to actionable tasks and tracks pr
 
 | Phase | Description | Status | Tasks |
 |-------|-------------|--------|-------|
-| **Phase 0** | Stop being a signals app | 🔴 Not Started | #12, #13 |
-| **Phase 1** | Strategy + Timeframe + Instrument first-class | 🔴 Not Started | #14-#21 |
-| **Phase 2** | Robustness + Quality | 🟡 Partially Done | #4-#6, #20 |
+| **Phase 0** | Stop being a signals app | ✅ Complete | #12, #13 |
+| **Phase 1** | Strategy + Timeframe + Instrument first-class | ✅ Complete | #14-#18, #21 (+ #16) |
+| **Phase 2** | Robustness + Quality | 🔴 Not Started | #20 (+ image validation/readability) |
 | **Phase 3** | Evaluation loop | 🔴 Not Started | Future |
 | **Phase 4** | Public sharing links | 🔴 Not Started | Future |
 
 ---
 
+## ✅ Done (Phase 0/1) Checklist
+
+Quick at-a-glance list of what’s already shipped. Details live in:
+- `PHASE-0-COMPLETION-SUMMARY.md`
+- `PHASE-1-COMPLETION-SUMMARY.md`
+
+- [x] **#12** Update UI language from signals → scenarios (Trend Bias + Confidence Score)
+- [x] **#13** Add disclaimers throughout the app (header + results + onboarding)
+- [x] **#14** Instrument selector (first-class input)
+- [x] **#15** Timeframe selector (first-class input)
+- [x] **#16** Unify analysis types (`src/lib/types.ts`) + backward compatibility
+- [x] **#17** Update `analyze-chart` API contract (strategy/timeframe/instrument + scenario output)
+- [x] **#18** Database schema updates for scenario analysis columns + indexes
+- [x] **#21** Redesign AnalysisResults into bull/bear scenario cards
+
 ## 🎯 Core Transformation Tasks (from ROADMAP.md)
+
+---
+
+## 🚀 SaaS readiness (security + billing + enforcement + UX + ops)
+
+For the practical “deployable SaaS” plan (Stripe, entitlements, security hardening, UX and ops), see:
+- `SAAS-READINESS-PLAN.md`
 
 ### Phase 0: Language & Compliance (1-2 days)
 
 #### Task #12: Update UI language from signals to scenarios
 **Roadmap ID:** `product-guardrails`
 **Priority:** 🔴 Critical
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Files to modify:**
 - `src/components/AnalysisResults.tsx`
@@ -39,7 +61,7 @@ This document maps the ROADMAP.md requirements to actionable tasks and tracks pr
 #### Task #13: Add disclaimers throughout app
 **Roadmap ID:** `product-guardrails`
 **Priority:** 🔴 Critical
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Deliverables:**
 - Create `DisclaimerBanner.tsx` component
@@ -59,7 +81,7 @@ This document maps the ROADMAP.md requirements to actionable tasks and tracks pr
 #### Task #14: Create InstrumentSelector component
 **Roadmap ID:** `first-class-inputs`
 **Priority:** 🟠 High
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Features:**
 - Search functionality
@@ -73,7 +95,7 @@ This document maps the ROADMAP.md requirements to actionable tasks and tracks pr
 #### Task #15: Create TimeframeSelector component
 **Roadmap ID:** `first-class-inputs`
 **Priority:** 🟠 High
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Timeframes:**
 - 1M, 5M, 15M, 30M, 1H, 4H, 1D, 1W, 1M
@@ -86,7 +108,7 @@ This document maps the ROADMAP.md requirements to actionable tasks and tracks pr
 #### Task #16: Unify Analysis types across codebase
 **Roadmap ID:** `refactor-types-state`
 **Priority:** 🟠 High
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Problem:**
 - `AnalysisData` duplicated in Index.tsx and AnalysisResults.tsx
@@ -136,7 +158,7 @@ interface Scenario {
 #### Task #17: Update analyze-chart API contract
 **Roadmap ID:** `api-contract`
 **Priority:** 🔴 Critical
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Backend changes:**
 - `supabase/functions/analyze-chart/index.ts`
@@ -181,7 +203,7 @@ interface Scenario {
 #### Task #18: Update database schema for scenarios
 **Roadmap ID:** `schema-updates`
 **Priority:** 🟠 High
-**Status:** Pending
+**Status:** ✅ Complete
 
 **Migration file:** `supabase/migrations/YYYYMMDD_scenario_analysis.sql`
 
@@ -279,7 +301,7 @@ const Index = () => {
 #### Task #21: Redesign AnalysisResults to show bull/bear cards
 **Roadmap ID:** `product-guardrails` + `api-contract`
 **Priority:** 🔴 Critical
-**Status:** Pending
+**Status:** ✅ Complete
 
 **New design:**
 
@@ -335,46 +357,21 @@ These were completed in my previous work but are NOT part of the core transforma
 
 ---
 
-## 🚦 Recommended Execution Order
+## 🚦 Recommended Execution Order (updated)
 
-### Week 1: Phase 0 Foundation
-1. **Day 1-2:** Tasks #12, #13 (Language + Disclaimers)
-   - Low risk, high impact
-   - Gets compliance language in place
-   - No backend changes
+### Next: Phase 2 (Robustness + Quality)
+1. **Task #20:** Add Zod validation for API responses
+   - Validate edge-function output before returning/saving
+   - Provide structured fallback errors for malformed AI JSON
+2. **Image validation + readability checks** (part of `robust-validation`)
+   - Size/format checks, heuristic readability scoring, better user feedback
+3. **Task #19:** Refactor `src/pages/Index.tsx` into smaller components/hooks
+   - Improves maintainability and unblocks faster iteration on Phase 2/3 features
 
-### Week 2-3: Phase 1 Type System + UI
-2. **Day 3-4:** Task #16 (Unify types)
-   - Critical foundation for all other work
-   - Prevents rework
-
-3. **Day 5-7:** Tasks #14, #15 (Selectors)
-   - New UI components
-   - Can be done in parallel
-
-4. **Day 8-10:** Task #21 (Redesign AnalysisResults)
-   - Major UI change
-   - Must happen after types unified
-
-### Week 3-4: Phase 1 Backend + Data
-5. **Day 11-13:** Task #18 (Database schema)
-   - Must precede API changes
-   - Test migration thoroughly
-
-6. **Day 14-16:** Task #17 (API contract)
-   - Backend transformation
-   - Update prompts carefully
-   - Test extensively
-
-7. **Day 17-18:** Task #20 (Zod validation)
-   - Hardens the new API
-   - Catches edge cases
-
-### Week 4-5: Phase 1 Refactor
-8. **Day 19-21:** Task #19 (Refactor Index.tsx)
-   - Improves maintainability
-   - Can be done last
-   - Safest when everything else works
+### Documentation alignment (recommended right after Phase 2 core)
+4. **Docs**: Update `USER-GUIDE.md`, `ARCHITECTURE.md`, and replace the `README.md` template
+   - Remove remaining BUY/SELL/HOLD “signals” wording in docs
+   - Keep docs consistent with scenario-analysis posture
 
 ---
 
@@ -464,8 +461,7 @@ After core transformation:
 
 ---
 
-**Status:** Ready to begin Phase 0
-**Next action:** Start Task #12 (Update UI language)
-**Estimated time to MVP:** 3-4 weeks for Phase 0 + Phase 1
+**Status:** Phase 0 + Phase 1 complete. Phase 2 is next.
+**Next action:** Start Task #20 (Zod validation) + image validation/readability checks.
 
-*Last updated: January 26, 2026*
+*Last updated: January 29, 2026*

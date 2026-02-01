@@ -13,6 +13,17 @@ interface LeaderboardEntry {
   total_trades: number;
 }
 
+interface LeaderboardProfileShape {
+  leaderboard_opt_in?: boolean;
+}
+
+interface LeaderboardStatsRow {
+  user_id?: unknown;
+  display_name?: unknown;
+  win_count?: unknown;
+  loss_count?: unknown;
+}
+
 const Leaderboard = () => {
   const { user, profile, updateProfile } = useAuth();
   const { toast } = useToast();
@@ -22,7 +33,8 @@ const Leaderboard = () => {
 
   useEffect(() => {
     if (profile) {
-      setIsOptedIn((profile as any).leaderboard_opt_in || false);
+      const p = profile as unknown as LeaderboardProfileShape;
+      setIsOptedIn(p.leaderboard_opt_in === true);
     }
   }, [profile]);
 
@@ -39,16 +51,27 @@ const Leaderboard = () => {
       if (error) throw error;
 
       // Convert to leaderboard entries with calculated fields
-      const leaderboard: LeaderboardEntry[] = (data || []).map((entry: any) => ({
-        user_id: entry.user_id,
-        display_name: entry.display_name || "Anonymous Trader",
-        win_count: Number(entry.win_count) || 0,
-        loss_count: Number(entry.loss_count) || 0,
-        total_trades: (Number(entry.win_count) || 0) + (Number(entry.loss_count) || 0),
-        win_rate: (Number(entry.win_count) || 0) + (Number(entry.loss_count) || 0) > 0
-          ? ((Number(entry.win_count) || 0) / ((Number(entry.win_count) || 0) + (Number(entry.loss_count) || 0))) * 100
-          : 0
-      }));
+      const leaderboard: LeaderboardEntry[] = (Array.isArray(data) ? data : []).map((row) => {
+        const entry = row as LeaderboardStatsRow;
+        const userId = typeof entry.user_id === "string" ? entry.user_id : "";
+        const displayName =
+          typeof entry.display_name === "string" && entry.display_name.trim()
+            ? entry.display_name
+            : "Anonymous Trader";
+        const winCount = typeof entry.win_count === "number" ? entry.win_count : Number(entry.win_count) || 0;
+        const lossCount = typeof entry.loss_count === "number" ? entry.loss_count : Number(entry.loss_count) || 0;
+        const total = winCount + lossCount;
+        const winRate = total > 0 ? (winCount / total) * 100 : 0;
+
+        return {
+          user_id: userId,
+          display_name: displayName,
+          win_count: winCount,
+          loss_count: lossCount,
+          total_trades: total,
+          win_rate: winRate,
+        };
+      });
 
       setEntries(leaderboard);
     } catch (error) {
@@ -63,7 +86,7 @@ const Leaderboard = () => {
 
     try {
       const newValue = !isOptedIn;
-      await updateProfile({ leaderboard_opt_in: newValue } as any);
+      await updateProfile({ leaderboard_opt_in: newValue } as Record<string, unknown>);
       setIsOptedIn(newValue);
       toast({
         title: newValue ? "Joined Leaderboard" : "Left Leaderboard",

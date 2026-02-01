@@ -6,10 +6,11 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     storage: {
       from: vi.fn(() => ({
-        getPublicUrl: vi.fn((path: string) => ({
+        createSignedUrl: vi.fn((path: string) => ({
           data: {
-            publicUrl: `https://example.supabase.co/storage/v1/object/public/chart-images/${path}`,
+            signedUrl: `https://example.supabase.co/storage/v1/object/sign/chart-images/${path}?token=mock`,
           },
+          error: null,
         })),
         upload: vi.fn(),
         remove: vi.fn(),
@@ -20,25 +21,23 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 describe("chartStorage", () => {
   describe("getChartImageUrl", () => {
-    it("should return public URL for given path", () => {
+    it("should return signed URL for given path", async () => {
       const path = "user123/analysis456.png";
-      const url = getChartImageUrl(path);
+      const url = await getChartImageUrl(path);
 
-      expect(url).toBe(
-        "https://example.supabase.co/storage/v1/object/public/chart-images/user123/analysis456.png"
-      );
+      expect(url).toBe("https://example.supabase.co/storage/v1/object/sign/chart-images/user123/analysis456.png?token=mock");
     });
 
-    it("should handle paths without leading slash", () => {
+    it("should handle paths without leading slash", async () => {
       const path = "test.png";
-      const url = getChartImageUrl(path);
+      const url = await getChartImageUrl(path);
 
       expect(url).toContain("test.png");
     });
 
-    it("should handle paths with special characters", () => {
+    it("should handle paths with special characters", async () => {
       const path = "user-123/file_name-2024.png";
-      const url = getChartImageUrl(path);
+      const url = await getChartImageUrl(path);
 
       expect(url).toContain("user-123/file_name-2024.png");
     });

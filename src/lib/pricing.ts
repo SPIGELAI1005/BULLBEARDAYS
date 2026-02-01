@@ -4,7 +4,7 @@
  * Yearly = 12 × monthly, 18% discount. Applicable to Starter, Pro, Elite only.
  */
 
-export type PlanId = "daypass" | "starter" | "pro" | "elite" | "founder";
+export type PlanId = "free" | "week_pass" | "starter" | "pro" | "elite" | "founder";
 
 export type BillingPeriod = "monthly" | "yearly";
 
@@ -48,9 +48,27 @@ export function getYearlyPrices(monthlyNum: number): {
   };
 }
 
+export const FREE_PLAN: PricingPlan = {
+  id: "free",
+  name: "Free",
+  price: "Free",
+  period: "7 days",
+  footnote: "10 analyses / 7 days · 5 context pulls / 7 days",
+  features: [
+    "Bull + Bear scenarios",
+    "10 analyses / 7 days",
+    "1 reference AI (choose one: GPT OR Gemini OR Claude)",
+    "Basic plan: entry range, SL, TP targets, R:R, invalidation",
+    "Share: download share-card (watermarked + disclaimer)",
+    "No ensemble mode",
+    "Online context: 5 pulls / 7 days",
+  ],
+  cta: "Try out",
+};
+
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: "daypass",
+    id: "week_pass",
     name: "Week Pass",
     price: "€2.80",
     period: "7 days",
@@ -60,11 +78,11 @@ export const PRICING_PLANS: PricingPlan[] = [
       "30 analyses / 7 days",
       "1 reference AI (choose one: GPT OR Gemini OR Claude)",
       "Basic plan: entry range, SL, TP targets, R:R, invalidation",
-      "Share: download share-card (watermarked + disclaimer)",
+      "Share: download share-card",
       "No ensemble mode",
       "Online context: 5 pulls / 7 days",
     ],
-    cta: "Start Week Pass",
+    cta: "Get Pass",
   },
   {
     id: "starter",
@@ -81,7 +99,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Saved analyses + export JSON",
       "Share: share-card + private link (viewer must be logged in)",
     ],
-    cta: "Choose Starter",
+    cta: "Get Started",
   },
   {
     id: "pro",
@@ -100,7 +118,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Share: share-card + public share links (methodology + timestamp + disclaimer footer)",
       "Priority processing (moderate)",
     ],
-    cta: "Go Pro",
+    cta: "Get Pro",
   },
   {
     id: "elite",
@@ -110,20 +128,21 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceMonthlyNum: 39.99,
     footnote: "2000 analyses / month · 600 context pulls / month",
     features: [
+      "Everything in Pro",
       "2000 analyses / month",
       "Higher rate limits + faster queue",
       "Advanced context: 600 pulls / month",
       "Personal performance logging (optional)",
       "Early access to new features",
     ],
-    cta: "Choose Elite",
+    cta: "Get Elite",
   },
 ];
 
 export const FOUNDER_PLAN: PricingPlan = {
   id: "founder",
   name: "Founder Lifetime (Limited)",
-  price: "€49",
+  price: "€49,80",
   period: "one-time",
   footnote: "300 analyses / month · 100 context pulls / month · resets monthly",
   features: [
@@ -132,7 +151,7 @@ export const FOUNDER_PLAN: PricingPlan = {
     "100 context pulls / month",
     "Founder badge",
   ],
-  cta: "Get Founder",
+  cta: "Become a Founding Member",
   isFeatured: true,
 };
 

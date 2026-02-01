@@ -6,6 +6,10 @@
 
 ---
 
+## Source of truth
+
+This document is a **historical completion summary** for Phase 0. For current status and next steps, see `ROADMAP-EXECUTION-PLAN.md`.
+
 ## 🎯 Objectives (from ROADMAP.md)
 
 Phase 0: "Stop being a signals app" - Replace language from **BUY/SELL signals** to **bull/bear scenario analysis** with proper disclaimers.
@@ -272,10 +276,8 @@ const displayConfidence = analysis.confidenceScore || analysis.probability;
 - Onboarding educates purpose
 
 ### ⚠️ Still Needed:
-- USER-GUIDE.md full transformation (documented)
-- Backend API response changes (Phase 1)
-- Database schema updates (Phase 1)
-- Complete removal of old terminology (Phase 1)
+- USER-GUIDE.md full transformation (documented in `USER-GUIDE-UPDATES-NEEDED.md`)
+- (Completed since Phase 0) Phase 1 API + schema + scenario UI updates — see `PHASE-1-COMPLETION-SUMMARY.md`
 
 ---
 

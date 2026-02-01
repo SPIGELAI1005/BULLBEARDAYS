@@ -1,10 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCors, corsResponse } from "../_shared/cors.ts";
+import { checkRateLimit, rateLimitExceededResponse } from "../_shared/rateLimiter.ts";
 
 interface MarketAnalysisRequest {
   symbol: string;
@@ -16,6 +13,13 @@ interface MarketAnalysisRequest {
   low24h: number;
 }
 
+interface UsageLimitRow {
+  allowed: boolean;
+  current_usage: number;
+  limit_value: number;
+  message: string;
+}
+
 const modelMapping: Record<string, string> = {
   gemini: "google/gemini-2.5-pro",
   gpt: "openai/gpt-5",
@@ -23,17 +27,19 @@ const modelMapping: Record<string, string> = {
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS
+  const cors = handleCors(req);
+  if (cors.response) {
+    return cors.response;
   }
 
   try {
     // Verify authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Please sign in to analyze markets' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return corsResponse(
+        { error: 'Unauthorized - Please sign in to analyze markets' },
+        { status: 401, origin: cors.origin }
       );
     }
 
@@ -49,9 +55,9 @@ serve(async (req) => {
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
     
     if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid session' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return corsResponse(
+        { error: 'Unauthorized - Invalid session' },
+        { status: 401, origin: cors.origin }
       );
     }
 
@@ -60,21 +66,54 @@ serve(async (req) => {
 
     // Rate limiting check (20 market analyses per minute)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: rateLimitOk } = await supabaseAdmin.rpc('check_rate_limit', {
-      p_user_id: userId,
-      p_endpoint: 'analyze-market',
-      p_max_requests: 20,
-      p_window_minutes: 1
-    });
+    const rateLimitResult = await checkRateLimit(supabaseAdmin, userId, 'analyze-market');
 
-    if (!rateLimitOk) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    if (!rateLimitResult.allowed) {
+      return corsResponse(
+        rateLimitExceededResponse(rateLimitResult, cors.origin),
+        {
+          status: 429,
+          origin: cors.origin,
+          headers: rateLimitResult.headers
+        }
       );
     }
 
     const marketData = await req.json() as MarketAnalysisRequest;
+
+    // Usage limit enforcement (calendar month)
+    const { data: usageData, error: usageError } = await supabase.rpc(
+      "check_usage_limit",
+      {
+        target_user_id: userId,
+        resource_type_param: "analysis",
+        increment_by: 1,
+      }
+    );
+
+    if (usageError) {
+      console.error("Usage limit check failed:", usageError);
+      return corsResponse(
+        { error: "Unable to verify usage limits. Please try again." },
+        { status: 500, origin: cors.origin }
+      );
+    }
+
+    const usageRow = Array.isArray(usageData) ? (usageData[0] as UsageLimitRow | undefined) : (usageData as UsageLimitRow | null);
+
+    if (!usageRow?.allowed) {
+      return corsResponse(
+        {
+          code: "USAGE_LIMIT_REACHED",
+          message:
+            usageRow?.message ||
+            "Monthly analysis limit reached. Please upgrade to continue.",
+          current_usage: usageRow?.current_usage ?? 0,
+          limit_value: usageRow?.limit_value ?? 0,
+        },
+        { status: 402, origin: cors.origin }
+      );
+    }
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -148,15 +187,15 @@ Provide your analysis in JSON format.`;
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        return corsResponse(
+          { error: "Rate limit exceeded. Please try again in a moment." },
+          { status: 429, origin: cors.origin }
         );
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        return corsResponse(
+          { error: "AI credits depleted. Please add credits to continue." },
+          { status: 402, origin: cors.origin }
         );
       }
       const errorText = await response.text();
@@ -202,15 +241,19 @@ Provide your analysis in JSON format.`;
     analysis.aiModel = "AI Quick Analysis";
     analysis.modelsUsed = ["Google Gemini Flash"];
 
-    return new Response(
-      JSON.stringify(analysis),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return corsResponse(
+      analysis,
+      {
+        status: 200,
+        origin: cors.origin,
+        headers: rateLimitResult.headers
+      }
     );
   } catch (error) {
     console.error("Error in analyze-market:", error);
-    return new Response(
-      JSON.stringify({ error: "An error occurred during market analysis. Please try again later." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return corsResponse(
+      { error: "An error occurred during market analysis. Please try again later." },
+      { status: 500, origin: cors.origin }
     );
   }
 });

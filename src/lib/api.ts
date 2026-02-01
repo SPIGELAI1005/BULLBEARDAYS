@@ -11,6 +11,12 @@ import {
   isScenarioAnalysis,
   isLegacyAnalysis,
 } from "@/lib/types";
+import {
+  safeValidateScenarioAnalysis,
+  createFallbackScenario,
+  validatePartialScenario,
+} from "@/lib/schemas";
+import { createUsageLimitReachedError } from "@/lib/billing/usageLimit";
 
 // Legacy AnalysisResult type - kept for backward compatibility
 // New code should use UnifiedAnalysis from types.ts
@@ -41,6 +47,83 @@ export interface AnalysisResult {
   };
 }
 
+interface UsageLimitPayload {
+  code?: string;
+  message?: string;
+  current_usage?: number;
+  limit_value?: number;
+}
+
+function analysisResultToLegacyAnalysis(result: AnalysisResult): LegacyAnalysis {
+  return {
+    signal: result.signal,
+    probability: result.probability,
+    takeProfit: result.takeProfit,
+    stopLoss: result.stopLoss,
+    riskReward: result.riskReward,
+    reasoning: {
+      bullish: Array.isArray(result.bullishReasons) ? result.bullishReasons : [],
+      bearish: Array.isArray(result.bearishReasons) ? result.bearishReasons : [],
+    },
+    chartAnalysis: result.chartAnalysis,
+    marketSentiment: result.marketSentiment,
+    aiModel: result.aiModel,
+    detectedAsset: result.detectedAsset,
+    currentPrice: result.currentPrice,
+    priceTargets: result.priceTargets,
+    confidenceIntervals: result.confidenceIntervals,
+    // Keep timeframe for storage (legacy helper reads it via `as any`)
+    ...(result.timeframe ? { timeframe: result.timeframe } : {}),
+  } as LegacyAnalysis;
+}
+
+function isAnalysisResult(value: unknown): value is AnalysisResult {
+  if (!value || typeof value !== "object") return false;
+  const maybe = value as Partial<AnalysisResult>;
+  return (
+    typeof maybe.signal === "string" &&
+    typeof maybe.probability === "number" &&
+    Array.isArray(maybe.bullishReasons) &&
+    Array.isArray(maybe.bearishReasons)
+  );
+}
+
+function isResponseLike(value: unknown): value is { clone: () => unknown; json: () => Promise<unknown> } {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "json" in value &&
+    typeof (value as { json?: unknown }).json === "function"
+  );
+}
+
+function isFunctionsHttpError(value: unknown): value is { context: unknown } {
+  return !!value && typeof value === "object" && "context" in value;
+}
+
+async function throwUsageLimitIfPresent(error: unknown): Promise<void> {
+  if (!isFunctionsHttpError(error)) return;
+  const context = (error as { context?: unknown }).context;
+  if (!isResponseLike(context)) return;
+
+  try {
+    const raw = await (context as { clone?: () => unknown; json: () => Promise<unknown> }).json();
+    if (!raw || typeof raw !== "object") return;
+    const payload = raw as UsageLimitPayload;
+    if (payload.code !== "USAGE_LIMIT_REACHED") return;
+
+    throw createUsageLimitReachedError({
+      message:
+        payload.message ||
+        "Monthly analysis limit reached. Please upgrade to continue.",
+      currentUsage: payload.current_usage,
+      limitValue: payload.limit_value,
+    });
+  } catch {
+    // If we can't parse structured payload, fall back to generic handling upstream.
+  }
+}
+
 export async function analyzeChart(
   imageBase64: string,
   selectedModels: string[],
@@ -64,6 +147,7 @@ export async function analyzeChart(
 
   if (error) {
     console.error("Analysis error:", error);
+    await throwUsageLimitIfPresent(error);
     throw new Error(error.message || "Failed to analyze chart");
   }
 
@@ -71,8 +155,44 @@ export async function analyzeChart(
     throw new Error(data.error);
   }
 
-  // API now returns UnifiedAnalysis (ScenarioAnalysis or LegacyAnalysis)
-  return data as UnifiedAnalysis;
+  // Validate response with Zod
+  const validationResult = safeValidateScenarioAnalysis(data);
+
+  if (!validationResult.success) {
+    console.warn("⚠️ API response validation failed:", validationResult.error.errors);
+
+    // Check if this is a partial valid response
+    const partialValidation = validatePartialScenario(data);
+
+    if (!partialValidation.valid) {
+      console.error("Validation errors:", partialValidation.errors);
+    }
+
+    // Return fallback scenario if validation fails
+    const fallback = createFallbackScenario("Client-side validation failed", {
+      aiModel: data?.aiModel || "AI Assistant",
+      strategy: options?.strategy,
+      timeframe: options?.timeframe
+        ? {
+            selected: options.timeframe,
+            final: options.timeframe,
+          }
+        : undefined,
+      instrument: options?.instrument
+        ? {
+            selected: options.instrument,
+            final: options.instrument,
+          }
+        : undefined,
+    });
+
+    return fallback;
+  }
+
+  console.log("✅ Client-side validation successful");
+
+  // Return validated data
+  return validationResult.data as UnifiedAnalysis;
 }
 
 export async function fetchMarketData(): Promise<MarketDataItem[]> {
@@ -86,13 +206,14 @@ export async function fetchMarketData(): Promise<MarketDataItem[]> {
   return data.data as MarketDataItem[];
 }
 
-export async function analyzeMarketData(marketData: MarketDataItem): Promise<AnalysisResult> {
+export async function analyzeMarketData(marketData: MarketDataItem): Promise<UnifiedAnalysis> {
   const { data, error } = await supabase.functions.invoke('analyze-market', {
     body: marketData,
   });
 
   if (error) {
     console.error("Market analysis error:", error);
+    await throwUsageLimitIfPresent(error);
     throw new Error(error.message || "Failed to analyze market data");
   }
 
@@ -100,7 +221,11 @@ export async function analyzeMarketData(marketData: MarketDataItem): Promise<Ana
     throw new Error(data.error);
   }
 
-  return data as AnalysisResult;
+  if (!isAnalysisResult(data)) {
+    throw new Error("Unexpected market analysis response shape");
+  }
+
+  return analysisResultToLegacyAnalysis(data);
 }
 
 export interface AnalysisRecord {
@@ -124,8 +249,8 @@ export interface AnalysisRecord {
   // New scenario format fields (Phase 1)
   trend_bias?: string | null;
   confidence_score?: number | null;
-  bull_scenario?: any | null;  // JSONB
-  bear_scenario?: any | null;  // JSONB
+  bull_scenario?: unknown | null;  // JSONB
+  bear_scenario?: unknown | null;  // JSONB
   strategy?: string | null;
   detected_timeframe?: string | null;
   selected_timeframe?: string | null;
@@ -154,7 +279,7 @@ export async function saveAnalysis(
   sessionId?: string,
   userId?: string
 ): Promise<AnalysisRecord> {
-  let insertData: any = {
+  let insertData: Record<string, unknown> = {
     chart_image_url: chartImageUrl || null,
     session_id: sessionId || null,
     user_id: userId || null,
@@ -197,7 +322,25 @@ export async function saveAnalysis(
       bullish_reasons: analysis.bullScenario.evidence,
       bearish_reasons: analysis.bearScenario.evidence,
     };
-  } else if ('detectedAsset' in analysis) {
+  } else if (isLegacyAnalysis(analysis)) {
+    // Save LegacyAnalysis in legacy format only
+    const timeframe = (analysis as unknown as { timeframe?: unknown }).timeframe;
+    insertData = {
+      ...insertData,
+      detected_asset: analysis.detectedAsset || 'Unknown',
+      timeframe: typeof timeframe === "string" ? timeframe : '1D',
+      signal: analysis.signal,
+      probability: analysis.probability,
+      take_profit: analysis.takeProfit,
+      stop_loss: analysis.stopLoss,
+      risk_reward: analysis.riskReward,
+      chart_analysis: analysis.chartAnalysis,
+      market_sentiment: analysis.marketSentiment,
+      bullish_reasons: analysis.reasoning.bullish,
+      bearish_reasons: analysis.reasoning.bearish,
+      ai_model: analysis.aiModel,
+    };
+  } else if (isAnalysisResult(analysis)) {
     // Save AnalysisResult in legacy format only
     insertData = {
       ...insertData,
@@ -215,12 +358,12 @@ export async function saveAnalysis(
       ai_model: analysis.aiModel,
     };
   } else {
-    // Save LegacyAnalysis in legacy format only
     const legacyAnalysis = analysis as LegacyAnalysis;
+    const timeframe = (legacyAnalysis as unknown as { timeframe?: unknown }).timeframe;
     insertData = {
       ...insertData,
       detected_asset: legacyAnalysis.detectedAsset || 'Unknown',
-      timeframe: (legacyAnalysis as any).timeframe || '1D',
+      timeframe: typeof timeframe === "string" ? timeframe : '1D',
       signal: legacyAnalysis.signal,
       probability: legacyAnalysis.probability,
       take_profit: legacyAnalysis.takeProfit,
@@ -236,7 +379,7 @@ export async function saveAnalysis(
 
   const { data, error } = await supabase
     .from('analyses')
-    .insert(insertData)
+    .insert(insertData as never)
     .select()
     .single();
 
