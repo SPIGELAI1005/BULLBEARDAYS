@@ -304,7 +304,10 @@ const About = () => {
                   Intro film
                 </p>
                 <h2 className="mt-2 text-lg md:text-xl font-semibold text-foreground tracking-tight">
-                  The blueberry mindset... from single moments to structured advantage with bullbeardays.
+                  The{" "}
+                  <span className="text-sky-400 font-semibold">blueberry</span>{" "}
+                  mindset... from single moments to structured advantage with{" "}
+                  <span className="text-gradient-gold font-semibold">bullbeardays.com</span>
                 </h2>
               </div>
             </div>
