@@ -46,7 +46,7 @@ const AIModelSelector = ({
   onSetReference,
 }: AIModelSelectorProps) => {
   return (
-    <div className="glass-panel p-6">
+    <div id="ai-models" className="glass-panel p-6">
       <h3 className="text-lg font-medium text-foreground mb-1">AI Models</h3>
       <p className="text-sm text-muted-foreground mb-4">
         Select models for analysis. Click star to set as reference.

@@ -186,11 +186,27 @@ export function useAnalysisFlow(
           });
           return;
         }
+
+        const message = error instanceof Error ? error.message : "Failed to analyze chart";
+        const code = (error as any)?.code as string | undefined;
+        const isBilling = code === "AI_PROVIDER_BILLING_ERROR";
+        const isRateLimit = code === "AI_PROVIDER_RATE_LIMIT";
+
         toast({
-          title: "Analysis Failed",
-          description:
-            error instanceof Error ? error.message : "Failed to analyze chart",
+          title: isBilling ? "Provider billing issue" : isRateLimit ? "Rate limit" : "Analysis Failed",
+          description: message,
           variant: "destructive",
+          action: isBilling
+            ? createElement(
+                ToastAction,
+                {
+                  altText: "Switch model",
+                  onClick: () =>
+                    document.getElementById("ai-models")?.scrollIntoView({ behavior: "smooth" }),
+                },
+                "Switch model"
+              )
+            : undefined,
         });
       } finally {
         setIsAnalyzing(false);
@@ -259,11 +275,26 @@ export function useAnalysisFlow(
           });
           return;
         }
+        const message = error instanceof Error ? error.message : "Failed to analyze chart";
+        const code = (error as any)?.code as string | undefined;
+        const isBilling = code === "AI_PROVIDER_BILLING_ERROR";
+        const isRateLimit = code === "AI_PROVIDER_RATE_LIMIT";
+
         toast({
-          title: "Analysis Failed",
-          description:
-            error instanceof Error ? error.message : "Failed to analyze chart",
+          title: isBilling ? "Provider billing issue" : isRateLimit ? "Rate limit" : "Analysis Failed",
+          description: message,
           variant: "destructive",
+          action: isBilling
+            ? createElement(
+                ToastAction,
+                {
+                  altText: "Switch model",
+                  onClick: () =>
+                    document.getElementById("ai-models")?.scrollIntoView({ behavior: "smooth" }),
+                },
+                "Switch model"
+              )
+            : undefined,
         });
       } finally {
         setIsAnalyzing(false);
@@ -332,11 +363,26 @@ export function useAnalysisFlow(
           });
           return;
         }
+        const message = error instanceof Error ? error.message : "Failed to analyze market";
+        const code = (error as any)?.code as string | undefined;
+        const isBilling = code === "AI_PROVIDER_BILLING_ERROR";
+        const isRateLimit = code === "AI_PROVIDER_RATE_LIMIT";
+
         toast({
-          title: "Analysis Failed",
-          description:
-            error instanceof Error ? error.message : "Failed to analyze market",
+          title: isBilling ? "Provider billing issue" : isRateLimit ? "Rate limit" : "Analysis Failed",
+          description: message,
           variant: "destructive",
+          action: isBilling
+            ? createElement(
+                ToastAction,
+                {
+                  altText: "Switch model",
+                  onClick: () =>
+                    document.getElementById("ai-models")?.scrollIntoView({ behavior: "smooth" }),
+                },
+                "Switch model"
+              )
+            : undefined,
         });
       } finally {
         setIsAnalyzing(false);
