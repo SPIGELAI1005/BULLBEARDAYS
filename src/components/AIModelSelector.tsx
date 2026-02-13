@@ -97,6 +97,7 @@ const AIModelSelector = ({
                         e.stopPropagation();
                         onSetReference(model.id);
                       }}
+                      aria-label={`Set ${model.name} as reference model`}
                       className={`p-2 rounded-lg transition-colors ${
                         isReference
                           ? "text-accent"

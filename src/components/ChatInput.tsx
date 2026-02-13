@@ -127,6 +127,8 @@ const ChatInput = ({ onSubmit, isLoading = false, placeholder = "Describe your t
             onClick={() => fileInputRef.current?.click()}
             className="absolute right-3 bottom-3 p-2.5 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
             title="Add image"
+            aria-label="Add image"
+            type="button"
           >
             <ImagePlus className="w-6 h-6" />
           </button>

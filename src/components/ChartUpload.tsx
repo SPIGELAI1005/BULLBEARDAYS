@@ -109,6 +109,8 @@ const ChartUpload = ({ onImageUpload, uploadedImage, onClear }: ChartUploadProps
             onClear();
             setValidationResult(null);
           }}
+          aria-label="Remove uploaded image"
+          type="button"
           className="absolute top-2 right-2 z-10 p-2 rounded-full bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive hover:border-destructive transition-all opacity-0 group-hover:opacity-100"
         >
           <X className="w-4 h-4" />

@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Target, Shield, Percent, Brain, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import AnalysisResultsSkeleton from "@/components/analysis/AnalysisResultsSkeleton";
 import PriceTargets from "./PriceTargets";
 import QuickActions from "./QuickActions";
 import TradingStrategySelector from "./TradingStrategySelector";
@@ -20,21 +21,7 @@ interface AnalysisResultsProps {
 
 const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader', onStrategyChange }: AnalysisResultsProps) => {
   if (isLoading) {
-    return (
-      <div className="glass-trading p-8">
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <div className="relative w-20 h-20 mb-6">
-            <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-            <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <div className="absolute inset-2 rounded-full border-2 border-accent/30 border-b-transparent animate-spin animation-delay-150" style={{ animationDirection: 'reverse' }} />
-          </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">Analyzing Chart</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-xs">
-            Running technical analysis, market sentiment check, and AI inference...
-          </p>
-        </div>
-      </div>
-    );
+    return <AnalysisResultsSkeleton />;
   }
 
   if (!analysis) {
