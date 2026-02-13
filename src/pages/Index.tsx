@@ -4,6 +4,8 @@
  */
 import { useState, useRef, useEffect } from "react";
 import GettingStartedChecklist from "@/components/GettingStartedChecklist";
+import DemoPresets from "@/components/DemoPresets";
+import { setDemoModeEnabled } from "@/lib/demo/demoMode";
 import { useTheme } from "@/hooks/useTheme";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Header from "@/components/Header";
@@ -41,7 +43,13 @@ const Index = () => {
     handleDetailModalClose,
   } = useAnalysisHistory();
 
-  const { canAnalyze, analysis } = useAnalysisFlow({
+  const {
+    canAnalyze,
+    analysis,
+    setSelectedInstrument,
+    setSelectedTimeframe,
+    setTradingStrategy,
+  } = useAnalysisFlow({
     onHistoryUpdate: loadAllAnalyses,
   });
 
@@ -98,6 +106,18 @@ const Index = () => {
           id="analyze"
           className="max-w-7xl mx-auto px-4 pt-6 pb-16 md:px-6 md:pt-8 md:pb-20"
         >
+          <DemoPresets
+            onApply={(p) => {
+              // Make demo immediately usable
+              setDemoModeEnabled(true);
+              setSelectedInstrument(p.instrument);
+              setSelectedTimeframe(p.timeframe);
+              setTradingStrategy(p.strategy);
+              // scroll to analysis section
+              document.getElementById("analyze")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+
           <GettingStartedChecklist
             hasUploadedImage={hasImage}
             hasRunAnalysis={!!analysis}

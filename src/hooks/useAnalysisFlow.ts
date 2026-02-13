@@ -20,6 +20,7 @@ import { uploadChartImage } from "@/lib/chartStorage";
 import { isUsageLimitReachedError } from "@/lib/billing/usageLimit";
 
 export interface UseAnalysisFlowReturn {
+  cancelCurrentAnalysis?: () => void;
   // State
   analysis: UnifiedAnalysis | null;
   isAnalyzing: boolean;
@@ -75,6 +76,16 @@ export function useAnalysisFlow(
     string | undefined
   >(undefined);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("1D");
+  const [runToken, setRunToken] = useState(0);
+
+  const cancelCurrentAnalysis = useCallback(() => {
+    setRunToken((t) => t + 1);
+    setIsAnalyzing(false);
+    toast({
+      title: "Stopped",
+      description: "Analysis was stopped locally (the request may still finish on the server).",
+    });
+  }, [toast]);
 
   const refreshHistory = useCallback(async () => {
     if (options.onHistoryUpdate) {
@@ -149,6 +160,9 @@ export function useAnalysisFlow(
 
       setIsAnalyzing(true);
       setAnalysis(null);
+
+      const myToken = runToken + 1;
+      setRunToken(myToken);
 
       try {
         const result = await analyzeChart(
@@ -237,6 +251,9 @@ export function useAnalysisFlow(
 
       setIsAnalyzing(true);
       setAnalysis(null);
+
+      const myToken = runToken + 1;
+      setRunToken(myToken);
 
       try {
         const result = await analyzeChart(images[0], selectedModels, referenceModel, {
@@ -392,10 +409,17 @@ export function useAnalysisFlow(
   );
 
   const canAnalyze = useCallback((hasImage: boolean) => {
+    // Demo mode can run without an uploaded chart
+    try {
+      if (localStorage.getItem("bbd:demo-mode:v1") === "true") return selectedModels.length > 0;
+    } catch {
+      // ignore
+    }
     return hasImage && selectedModels.length > 0;
   }, [selectedModels]);
 
   return {
+    cancelCurrentAnalysis,
     analysis,
     isAnalyzing,
     selectedModels,

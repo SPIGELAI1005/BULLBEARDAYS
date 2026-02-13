@@ -9,6 +9,7 @@ import ChatInput from "@/components/ChatInput";
 import AIModelSelector from "@/components/AIModelSelector";
 import ProviderHealthPanel from "@/components/ProviderHealthPanel";
 import AnalyzeButton from "@/components/AnalyzeButton";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import TimeframeSelector from "@/components/TimeframeSelector";
 import InstrumentSelector from "@/components/InstrumentSelector";
 import AnalysisResults from "@/components/AnalysisResults";
@@ -83,6 +84,8 @@ const InputSection = ({
   marketAssets,
   analysis,
 }: InputSectionProps) => {
+  const { enabled: isDemoMode } = useDemoMode();
+
   return (
     <div className="lg:col-span-2 space-y-6">
       {/* Mode Toggle - Chat / Single / Multi */}
@@ -214,6 +217,7 @@ const InputSection = ({
                 onClick={onAnalyze}
                 disabled={!canAnalyze}
                 isLoading={isAnalyzing}
+                helperText={isDemoMode ? "Demo mode: analysis uses local sample output" : undefined}
               />
             </div>
           </div>
