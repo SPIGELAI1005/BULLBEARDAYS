@@ -3,6 +3,7 @@
  * Refactored to use custom hooks and extracted components
  */
 import { useState, useRef, useEffect } from "react";
+import GettingStartedChecklist from "@/components/GettingStartedChecklist";
 import { useTheme } from "@/hooks/useTheme";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Header from "@/components/Header";
@@ -40,7 +41,7 @@ const Index = () => {
     handleDetailModalClose,
   } = useAnalysisHistory();
 
-  const { canAnalyze } = useAnalysisFlow({
+  const { canAnalyze, analysis } = useAnalysisFlow({
     onHistoryUpdate: loadAllAnalyses,
   });
 
@@ -97,6 +98,11 @@ const Index = () => {
           id="analyze"
           className="max-w-7xl mx-auto px-4 pt-6 pb-16 md:px-6 md:pt-8 md:pb-20"
         >
+          <GettingStartedChecklist
+            hasUploadedImage={hasImage}
+            hasRunAnalysis={!!analysis}
+          />
+
           {/* Main Analysis Container */}
           <AnalysisContainer />
         </main>

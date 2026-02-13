@@ -319,7 +319,7 @@ export function useAnalysisFlow(
 
       toast({
         title: `Analyzing ${asset.symbol}...`,
-        description: "Getting AI trading recommendation",
+        description: "Getting AI market scenario analysis",
       });
 
       try {

@@ -1,4 +1,4 @@
-import logo from "@/assets/bullbeardays-logo.png";
+import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import CandlestickBackground from "@/components/CandlestickBackground";
 

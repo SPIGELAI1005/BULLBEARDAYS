@@ -192,6 +192,18 @@ export async function analyzeChart(
     instrument?: string;
   }
 ): Promise<UnifiedAnalysis> {
+  // Task #8: Demo mode (no backend required)
+  // Set VITE_DEMO_MODE=true to use a local canned response.
+  if ((import.meta as any).env?.VITE_DEMO_MODE === "true") {
+    const { createDemoScenario } = await import("@/lib/demo/demoScenario");
+    return createDemoScenario({
+      strategy: options?.strategy,
+      timeframe: options?.timeframe,
+      instrument: options?.instrument,
+      aiModel: "Demo Mode",
+    });
+  }
+
   // Task #6: automatic fallback across the selected providers.
   // Order: reference first, then the remaining selected models.
   const attemptOrder = defaultFallbackOrder(selectedModels, referenceModel);
@@ -265,6 +277,11 @@ export async function analyzeChart(
 }
 
 export async function fetchMarketData(): Promise<MarketDataItem[]> {
+  if ((import.meta as any).env?.VITE_DEMO_MODE === "true") {
+    const { DEMO_MARKET_DATA } = await import("@/lib/demo/demoData");
+    return DEMO_MARKET_DATA;
+  }
+
   const { data, error } = await supabase.functions.invoke('market-data');
 
   if (error) {

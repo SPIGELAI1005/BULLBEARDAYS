@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import bullbearLogo from "@/assets/bullbeardays-logo.png";
+import bullbearLogo from "@/assets/logo.jpeg";
 import { useMarketSession } from "@/hooks/useMarketSession";
 
 const AnimatedLogo = () => {

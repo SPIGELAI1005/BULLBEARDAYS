@@ -11,22 +11,22 @@ interface AIModel {
 const models: AIModel[] = [
   {
     id: "gemini",
-    name: "Google Gemini",
-    description: "Advanced multimodal analysis",
+    name: "Gemini",
+    description: "Fast multimodal (good default)",
     icon: "✦",
     color: "from-blue-400 to-cyan-400",
   },
   {
     id: "gpt",
-    name: "OpenAI GPT",
-    description: "Deep reasoning capabilities",
+    name: "OpenAI",
+    description: "Balanced quality + reasoning",
     icon: "◆",
     color: "from-emerald-400 to-green-400",
   },
   {
     id: "claude",
-    name: "Anthropic Claude",
-    description: "Nuanced market insights",
+    name: "Claude",
+    description: "High-quality writing & nuance",
     icon: "◈",
     color: "from-orange-400 to-amber-400",
   },

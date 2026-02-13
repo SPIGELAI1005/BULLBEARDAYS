@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,18 +10,18 @@ import { CurrencyProvider } from "@/hooks/useCurrency";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { DisclaimerGate, DisclaimerExitScreen } from "@/components/DisclaimerGate";
 import CookieConsent from "@/components/CookieConsent";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Terms from "./pages/Terms";
-import RiskDisclosure from "./pages/RiskDisclosure";
-import Privacy from "./pages/Privacy";
-import RefundPolicy from "./pages/RefundPolicy";
-import Methodology from "./pages/Methodology";
-import Pricing from "./pages/Pricing";
-import PricingConditions from "./pages/PricingConditions";
-import Billing from "./pages/Billing";
-import Signup from "./pages/Signup";
-import About from "./pages/About";
+const Index = lazy(() => import("./pages/Index"));
+const About = lazy(() => import("./pages/About"));
+const Terms = lazy(() => import("./pages/Terms"));
+const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const Methodology = lazy(() => import("./pages/Methodology"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const PricingConditions = lazy(() => import("./pages/PricingConditions"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Signup = lazy(() => import("./pages/Signup"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,8 +51,9 @@ function App() {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <div className={isGateOpen ? "pointer-events-none select-none blur-md brightness-90" : ""}>
-                  <Routes>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>}>
+                  <div className={isGateOpen ? "pointer-events-none select-none blur-md brightness-90" : ""}>
+                    <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/terms" element={<Terms />} />
@@ -66,8 +67,9 @@ function App() {
                     <Route path="/signup" element={<Signup />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
+                    </Routes>
+                  </div>
+                </Suspense>
                 <DisclaimerGate
                   isOpen={isGateOpen}
                   onAgree={() => setHasAcceptedDisclaimer(true)}
