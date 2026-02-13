@@ -49,6 +49,17 @@ class ErrorBoundary extends Component<Props, State> {
     window.location.href = "/";
   };
 
+  private handleResetLocalState = () => {
+    try {
+      localStorage.removeItem("bbd:demo-mode:v1");
+      localStorage.removeItem("bbd:provider-status:v1");
+      localStorage.removeItem("bbd:getting-started:v1");
+    } catch {
+      // ignore
+    }
+    this.handleReload();
+  };
+
   public render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
@@ -102,6 +113,14 @@ class ErrorBoundary extends Component<Props, State> {
                 >
                   <RefreshCw className="h-4 w-4" />
                   Reload Page
+                </Button>
+                <Button
+                  onClick={this.handleResetLocalState}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Reset local state
                 </Button>
                 <Button
                   onClick={this.handleGoHome}

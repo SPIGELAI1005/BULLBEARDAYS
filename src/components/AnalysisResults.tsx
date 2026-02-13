@@ -4,6 +4,7 @@ import PriceTargets from "./PriceTargets";
 import QuickActions from "./QuickActions";
 import TradingStrategySelector from "./TradingStrategySelector";
 import DisclaimerBanner from "./DisclaimerBanner";
+import MethodologyDrawer from "@/components/MethodologyDrawer";
 import {
   UnifiedAnalysis,
   TradingStrategy,
@@ -91,6 +92,17 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
     <div className="space-y-6">
       {/* Trend Bias Header - Neutral presentation */}
       <div className="glass-trading p-6">
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="text-xs px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/40 text-foreground transition-colors"
+            aria-label="Print or save as PDF"
+            title="Print / Save as PDF"
+          >
+            Print / PDF
+          </button>
+        </div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-xl ${
@@ -399,6 +411,8 @@ const AnalysisResults = ({ analysis, isLoading, tradingStrategy = 'swingTrader',
           </div>
         )}
       </div>
+
+      <MethodologyDrawer />
 
       {/* Footer Disclaimer */}
       <div className="glass-trading p-4">

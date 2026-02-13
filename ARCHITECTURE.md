@@ -1,6 +1,6 @@
 # BullBearDays.com - Technical Documentation
 
-> **AI Trading Chart Analyzer** - A React/TypeScript web application that uses AI to analyze trading charts and provide actionable trading signals.
+> **Chart Screenshot Scenario Analysis** - A React/TypeScript web application that analyzes chart screenshots and returns **bull & bear scenarios** (educational, not financial advice).
 
 ---
 
@@ -24,9 +24,9 @@
 ## Overview
 
 **BullBearDays** is an AI-powered trading analysis platform that:
-- Analyzes trading chart screenshots using AI (GPT-5, Gemini, Claude alternatives)
-- Provides BUY/SELL/HOLD signals with confidence percentages
-- Calculates Take Profit (TP) and Stop Loss (SL) levels
+- Analyzes chart screenshots using AI providers (OpenAI, Gemini, Claude)
+- Returns **bull & bear scenario** cards + bias + chart-read confidence
+- Includes key levels, invalidation, and risk notes
 - Tracks trading performance and win rates
 - Supports multiple trading strategies (Scalper → Long-Term Investor)
 - Includes real-time market data, watchlists, and price alerts
