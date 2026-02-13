@@ -19,6 +19,7 @@ import {
 import { createUsageLimitReachedError } from "@/lib/billing/usageLimit";
 import { createProviderError } from "@/lib/ai/providerErrors";
 import { defaultFallbackOrder, providerLabel } from "@/lib/ai/providerModels";
+import { setProviderStatus } from "@/lib/ai/providerStatus";
 
 // Legacy AnalysisResult type - kept for backward compatibility
 // New code should use UnifiedAnalysis from types.ts
@@ -193,8 +194,8 @@ export async function analyzeChart(
   }
 ): Promise<UnifiedAnalysis> {
   // Task #8: Demo mode (no backend required)
-  // Set VITE_DEMO_MODE=true to use a local canned response.
-  if ((import.meta as any).env?.VITE_DEMO_MODE === "true") {
+  const { isDemoModeEnabled } = await import("@/lib/demo/demoMode");
+  if (isDemoModeEnabled()) {
     const { createDemoScenario } = await import("@/lib/demo/demoScenario");
     return createDemoScenario({
       strategy: options?.strategy,
@@ -217,10 +218,17 @@ export async function analyzeChart(
       console.error("Analysis error:", error);
       lastErr = error;
 
-      // Throw usage-limit immediately (hard stop)
+      // Record provider status for UI
+      setProviderStatus({
+        providerKey: ref,
+        code: "AI_PROVIDER_ERROR",
+        message: (error as any)?.message || "Provider error",
+        at: Date.now(),
+      });
+
+      // Throw usage-limit / structured provider errors immediately when applicable
       await throwStructuredErrorsIfPresent(error, { providerKey: ref });
 
-      // If it's not a structured usage/provider error, keep it as lastErr and try next provider.
       continue;
     }
 
@@ -263,6 +271,14 @@ export async function analyzeChart(
     }
 
     console.log("✅ Client-side validation successful");
+
+    setProviderStatus({
+      providerKey: ref,
+      code: "OK",
+      message: "OK",
+      at: Date.now(),
+    });
+
     return validationResult.data as UnifiedAnalysis;
   }
 
@@ -277,7 +293,8 @@ export async function analyzeChart(
 }
 
 export async function fetchMarketData(): Promise<MarketDataItem[]> {
-  if ((import.meta as any).env?.VITE_DEMO_MODE === "true") {
+  const { isDemoModeEnabled } = await import("@/lib/demo/demoMode");
+  if (isDemoModeEnabled()) {
     const { DEMO_MARKET_DATA } = await import("@/lib/demo/demoData");
     return DEMO_MARKET_DATA;
   }

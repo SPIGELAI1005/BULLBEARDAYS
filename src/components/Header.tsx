@@ -7,6 +7,7 @@ import { useMarketSession } from "@/hooks/useMarketSession";
 import AuthModal from "@/components/AuthModal";
 import ThemeToggle from "@/components/ThemeToggle";
 import CurrencyToggle from "@/components/CurrencyToggle";
+import DemoToggle from "@/components/DemoToggle";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
@@ -14,6 +15,7 @@ const NAV_LINKS = [
   { label: "Analyze", href: "/#analyze" },
   { label: "Performance", href: "/#performance" },
   { label: "About", href: "/about" },
+  { label: "Use cases", href: "/use-cases" },
   { label: "Pricing", href: "/pricing" },
 ] as const;
 
@@ -96,10 +98,12 @@ const Header = () => {
               <a href="/#analyze" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Analyze</a>
               <a href="/#performance" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Performance</a>
               <Link to="/about" className="text-sm text-foreground/90 hover:text-foreground transition-colors">About</Link>
+              <Link to="/use-cases" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Use cases</Link>
               <Link to="/pricing" className="text-sm text-foreground/90 hover:text-foreground transition-colors">Pricing</Link>
             </nav>
 
             <div className="hidden md:flex items-center gap-3 shrink-0">
+              <DemoToggle compact />
               <CurrencyToggle />
               <ThemeToggle />
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-bullish/10 border border-bullish/20">
@@ -230,6 +234,12 @@ const Header = () => {
           <div className="flex flex-col gap-2">
             <span className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Currency</span>
             <CurrencyToggle />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Demo</span>
+            <div className="px-4">
+              <DemoToggle />
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <span className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Theme</span>

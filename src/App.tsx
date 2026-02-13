@@ -12,6 +12,7 @@ import { DisclaimerGate, DisclaimerExitScreen } from "@/components/DisclaimerGat
 import CookieConsent from "@/components/CookieConsent";
 const Index = lazy(() => import("./pages/Index"));
 const About = lazy(() => import("./pages/About"));
+const UseCases = lazy(() => import("./pages/UseCases"));
 const Terms = lazy(() => import("./pages/Terms"));
 const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -56,6 +57,7 @@ function App() {
                     <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/use-cases" element={<UseCases />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/risk-disclosure" element={<RiskDisclosure />} />
                     <Route path="/privacy" element={<Privacy />} />

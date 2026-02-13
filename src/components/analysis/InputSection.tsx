@@ -7,6 +7,7 @@ import ChartUpload from "@/components/ChartUpload";
 import MultiChartUpload from "@/components/MultiChartUpload";
 import ChatInput from "@/components/ChatInput";
 import AIModelSelector from "@/components/AIModelSelector";
+import ProviderHealthPanel from "@/components/ProviderHealthPanel";
 import AnalyzeButton from "@/components/AnalyzeButton";
 import TimeframeSelector from "@/components/TimeframeSelector";
 import InstrumentSelector from "@/components/InstrumentSelector";
@@ -180,13 +181,14 @@ const InputSection = ({
               />
             )}
 
-            <div className="ai-model-selector">
+            <div className="ai-model-selector space-y-4">
               <AIModelSelector
                 selectedModels={selectedModels}
                 referenceModel={referenceModel}
                 onToggleModel={onToggleModel}
                 onSetReference={onSetReference}
               />
+              <ProviderHealthPanel selectedModels={selectedModels} />
             </div>
 
             {/* Phase 1: First-Class Inputs */}
