@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { handleCors, corsResponse } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitExceededResponse } from "../_shared/rateLimiter.ts";
+import { callAi } from "../_shared/aiProviders.ts";
 
 // Zod validation schemas for AI response
 const KeyLevelsSchema = z.object({
@@ -110,16 +111,25 @@ interface UsageLimitRow {
   message: string;
 }
 
-const modelMapping: Record<string, string> = {
-  gemini: "google/gemini-2.5-pro",
-  gpt: "openai/gpt-5",
-  claude: "google/gemini-2.5-flash", // Using Gemini Flash as Claude equivalent
+// Provider model mapping (your own keys)
+//
+// Keep the UI keys stable: gemini | gpt | claude
+// Map them to provider-specific model ids.
+const modelMapping: Record<string, { provider: "gemini" | "openai" | "anthropic"; model: string; displayName: string }> = {
+  // Gemini: pick a vision-capable model.
+  gemini: { provider: "gemini", model: "gemini-1.5-pro", displayName: "Google Gemini" },
+
+  // OpenAI: vision-capable chat model.
+  gpt: { provider: "openai", model: "gpt-4o-mini", displayName: "OpenAI" },
+
+  // Claude: vision-capable messages API model.
+  claude: { provider: "anthropic", model: "claude-3-5-sonnet-20241022", displayName: "Anthropic Claude" },
 };
 
 const modelDisplayNames: Record<string, string> = {
-  gemini: "Google Gemini Pro",
-  gpt: "OpenAI GPT-5",
-  claude: "AI Assistant", 
+  gemini: modelMapping.gemini.displayName,
+  gpt: modelMapping.gpt.displayName,
+  claude: modelMapping.claude.displayName,
 };
 
 serve(async (req) => {
@@ -250,13 +260,8 @@ serve(async (req) => {
       );
     }
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
-    const model = modelMapping[referenceModel] || "google/gemini-2.5-pro";
-    const displayName = modelDisplayNames[referenceModel] || "AI";
+    const modelChoice = modelMapping[referenceModel] || modelMapping.gemini;
+    const displayName = modelChoice.displayName;
 
     // Build context from user inputs
     const userContext = [];
@@ -317,62 +322,49 @@ Guidelines:
 - If user provided context (strategy/timeframe/instrument), use it but you may detect different values
 - Return ONLY valid JSON, no markdown or extra text`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Analyze this trading chart and provide educational scenario analysis in JSON format. Present both bull and bear scenarios objectively."
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: imageBase64
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.3,
-      }),
-    });
+    let content: string | undefined;
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    try {
+      const ai = await callAi({
+        provider: modelChoice.provider,
+        model: modelChoice.model,
+        systemPrompt,
+        userText: "Analyze this trading chart and provide educational scenario analysis in JSON format. Present both bull and bear scenarios objectively.",
+        imageDataUrl: imageBase64,
+        maxTokens: 2000,
+        temperature: 0.3,
+      });
+
+      content = ai.content;
+      console.log("AI Response received, length:", content?.length || 0);
+    } catch (providerError) {
+      const kind = (providerError as any)?.kind;
+      const status = (providerError as any)?.status;
+      const body = (providerError as any)?.body;
+
+      console.error("AI provider error:", { kind, status, body });
+
+      if (kind === "rate_limit" || status === 429) {
         return corsResponse(
           { error: "Rate limit exceeded. Please try again in a moment." },
           { status: 429, origin: cors.origin }
         );
       }
-      if (response.status === 402) {
+
+      if (kind === "billing" || status === 402) {
         return corsResponse(
-          { error: "AI credits depleted. Please add credits to continue." },
+          {
+            error: "AI_PROVIDER_BILLING_ERROR",
+            message: "API provider returned a billing error — your API key has run out of credits or has an insufficient balance. Check your provider's billing dashboard and top up or switch to a different API key.",
+          },
           { status: 402, origin: cors.origin }
         );
       }
-      const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      throw new Error(`AI analysis failed: ${response.status}`);
+
+      throw providerError;
     }
 
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
-    
-    console.log("AI Response received, length:", content?.length || 0);
-    
     if (!content) {
-      console.error("No content in AI response:", JSON.stringify(aiResponse));
       throw new Error("No response from AI");
     }
 
