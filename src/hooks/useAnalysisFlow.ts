@@ -21,6 +21,11 @@ import { isUsageLimitReachedError } from "@/lib/billing/usageLimit";
 
 export interface UseAnalysisFlowReturn {
   cancelCurrentAnalysis?: () => void;
+  // Compare
+  compareAnalysis?: UnifiedAnalysis | null;
+  isComparing?: boolean;
+  runCompare?: (providerKey: string) => Promise<void>;
+
   // State
   analysis: UnifiedAnalysis | null;
   isAnalyzing: boolean;
@@ -67,7 +72,10 @@ export function useAnalysisFlow(
   const { user } = useAuth();
 
   const [analysis, setAnalysis] = useState<UnifiedAnalysis | null>(null);
+  const [compareAnalysis, setCompareAnalysis] = useState<UnifiedAnalysis | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lastImageBase64, setLastImageBase64] = useState<string | null>(null);
   const [selectedModels, setSelectedModels] = useState<string[]>(["gemini"]);
   const [referenceModel, setReferenceModel] = useState("gemini");
   const [tradingStrategy, setTradingStrategy] =
@@ -157,6 +165,8 @@ export function useAnalysisFlow(
   const handleAnalyze = useCallback(
     async (imageToAnalyze: string) => {
       if (!imageToAnalyze || selectedModels.length === 0) return;
+      setLastImageBase64(imageToAnalyze);
+      setCompareAnalysis(null);
 
       setIsAnalyzing(true);
       setAnalysis(null);
@@ -165,16 +175,19 @@ export function useAnalysisFlow(
       setRunToken(myToken);
 
       try {
-        const result = await analyzeChart(
-          imageToAnalyze,
-          selectedModels,
-          referenceModel,
-          {
+        const timeoutMs = 45_000;
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Analysis timed out. Please try again or switch provider.")), timeoutMs)
+        );
+
+        const result = await Promise.race([
+          analyzeChart(imageToAnalyze, selectedModels, referenceModel, {
             strategy: tradingStrategy,
             timeframe: selectedTimeframe,
             instrument: selectedInstrument,
-          }
-        );
+          }),
+          timeoutPromise,
+        ]);
 
         setAnalysis(result);
 
@@ -256,11 +269,19 @@ export function useAnalysisFlow(
       setRunToken(myToken);
 
       try {
-        const result = await analyzeChart(images[0], selectedModels, referenceModel, {
-          strategy: tradingStrategy,
-          timeframe: selectedTimeframe,
-          instrument: selectedInstrument,
-        });
+        const timeoutMs = 45_000;
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Analysis timed out. Please try again or switch provider.")), timeoutMs)
+        );
+
+        const result = await Promise.race([
+          analyzeChart(images[0], selectedModels, referenceModel, {
+            strategy: tradingStrategy,
+            timeframe: selectedTimeframe,
+            instrument: selectedInstrument,
+          }),
+          timeoutPromise,
+        ]);
 
         setAnalysis(result);
 
@@ -418,8 +439,47 @@ export function useAnalysisFlow(
     return hasImage && selectedModels.length > 0;
   }, [selectedModels]);
 
+  const runCompare = useCallback(
+    async (providerKey: string) => {
+      if (!lastImageBase64) {
+        toast({
+          title: "Nothing to compare",
+          description: "Run an analysis first (or upload a chart) to compare providers.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsComparing(true);
+      try {
+        const res = await analyzeChart(lastImageBase64, selectedModels, providerKey, {
+          strategy: tradingStrategy,
+          timeframe: selectedTimeframe,
+          instrument: selectedInstrument,
+        });
+        setCompareAnalysis(res);
+        toast({
+          title: "Comparison ready",
+          description: `Compared with ${providerKey}.`,
+        });
+      } catch (e) {
+        toast({
+          title: "Compare failed",
+          description: e instanceof Error ? e.message : "Unable to compare",
+          variant: "destructive",
+        });
+      } finally {
+        setIsComparing(false);
+      }
+    },
+    [lastImageBase64, selectedModels, tradingStrategy, selectedTimeframe, selectedInstrument, toast]
+  );
+
   return {
     cancelCurrentAnalysis,
+    compareAnalysis,
+    isComparing,
+    runCompare,
     analysis,
     isAnalyzing,
     selectedModels,

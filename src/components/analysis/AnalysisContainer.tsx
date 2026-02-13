@@ -44,6 +44,7 @@ const AnalysisContainer = () => {
   const {
     analysis,
     isAnalyzing,
+    cancelCurrentAnalysis,
     selectedModels,
     referenceModel,
     tradingStrategy,
@@ -137,6 +138,7 @@ const AnalysisContainer = () => {
           isAnalyzing={isAnalyzing}
           onAnalyze={handleAnalyze}
           onChatSubmit={handleChatSubmit}
+          onCancel={cancelCurrentAnalysis}
           tradingStrategy={tradingStrategy}
           onStrategyChange={setTradingStrategy}
           selectedTimeframe={selectedTimeframe}

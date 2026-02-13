@@ -42,6 +42,7 @@ interface InputSectionProps {
   isAnalyzing: boolean;
   onAnalyze: () => void;
   onChatSubmit: (message: string, images: string[]) => Promise<void>;
+  onCancel?: () => void;
 
   // Context inputs
   tradingStrategy: TradingStrategy;
@@ -75,6 +76,7 @@ const InputSection = ({
   isAnalyzing,
   onAnalyze,
   onChatSubmit,
+  onCancel,
   tradingStrategy,
   onStrategyChange,
   selectedTimeframe,
@@ -217,6 +219,7 @@ const InputSection = ({
                 onClick={onAnalyze}
                 disabled={!canAnalyze}
                 isLoading={isAnalyzing}
+                onCancel={onCancel}
                 helperText={isDemoMode ? "Demo mode: analysis uses local sample output" : undefined}
               />
             </div>

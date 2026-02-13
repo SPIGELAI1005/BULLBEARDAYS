@@ -5,9 +5,10 @@ interface AnalyzeButtonProps {
   disabled: boolean;
   isLoading: boolean;
   helperText?: string;
+  onCancel?: () => void;
 }
 
-const AnalyzeButton = ({ onClick, disabled, isLoading, helperText }: AnalyzeButtonProps) => {
+const AnalyzeButton = ({ onClick, disabled, isLoading, helperText, onCancel }: AnalyzeButtonProps) => {
   return (
     <div className="space-y-2">
       <button
@@ -35,6 +36,16 @@ const AnalyzeButton = ({ onClick, disabled, isLoading, helperText }: AnalyzeButt
           </>
         )}
       </button>
+      {isLoading && onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full py-2 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/30 text-xs text-foreground transition-colors"
+        >
+          Stop
+        </button>
+      )}
+
       {helperText && (
         <div className="text-xs text-muted-foreground text-center">{helperText}</div>
       )}
