@@ -1,73 +1,89 @@
-# Welcome to your Lovable project
+# BullBearDays.com
 
-## Project info
+AI-assisted **chart screenshot scenario analysis**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Upload a chart → choose instrument/timeframe/strategy → get **Bull & Bear scenarios** with a **trend bias** and a **confidence score** (confidence in the chart read, not “profit probability”).
 
-## How can I edit this code?
+Live (current): https://chart-insights-ai-sigma.vercel.app
 
-There are several ways of editing your application.
+## Product posture
 
-**Use Lovable**
+BullBearDays is an **educational scenario analysis tool**.
+- It does **not** provide financial advice.
+- It avoids directive “BUY/SELL signals” in the chart screenshot flow.
+- Results are framed as **two-sided scenarios** (what bulls see vs what bears see) with invalidation levels + risks.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Tech stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- Frontend: Vite, React, TypeScript, Tailwind, shadcn/ui (Radix)
+- Backend: Supabase (Auth, Postgres, Storage, Edge Functions)
+- AI providers (direct): OpenAI, Google Gemini, Anthropic Claude
+- Billing: Stripe (Vercel API routes under `/api/stripe/*`)
 
-**Use your preferred IDE**
+## Repository
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+GitHub: https://github.com/SPIGELAI1005/BULLBEARDAYS
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Local development
 
-Follow these steps:
+### 1) Install
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+npm install
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2) Configure env
 
-# Step 3: Install the necessary dependencies.
-npm i
+Create `.env.local`:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```env
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+See **ENV.md** for staging vs prod setup.
+
+### 3) Run
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 4) Test
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm test
+```
 
-**Use GitHub Codespaces**
+## Supabase (staging + prod)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+This repo is designed for **two Supabase projects**:
+- Staging: used by Vercel Preview
+- Prod: used by Vercel Production
 
-## What technologies are used for this project?
+High-level steps:
+1) Create Supabase projects (staging + prod)
+2) Apply migrations: `supabase/migrations/*`
+3) Deploy edge functions: `supabase/functions/*`
+4) Set function secrets (per project):
+   - `OPENAI_API_KEY`
+   - `GEMINI_API_KEY`
+   - `ANTHROPIC_API_KEY`
+   - `ALLOWED_ORIGINS`
 
-This project is built with:
+## AI provider notes
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The `analyze-chart` edge function supports the UI provider keys:
+- `gpt` → OpenAI
+- `gemini` → Google Gemini
+- `claude` → Anthropic Claude
 
-## How can I deploy this project?
+If you see “billing error / insufficient credits”, it’s coming from the provider (not the UI). Top up the relevant provider account or switch keys.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Project planning
 
-## Can I connect a custom domain to my Lovable project?
+See `EPICS.md` for epics → features → tasks.
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+TBD (private for now).
