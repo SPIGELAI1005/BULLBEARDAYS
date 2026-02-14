@@ -43,6 +43,9 @@ const AnalysisContainer = () => {
 
   const {
     analysis,
+    compareAnalysis,
+    isComparing,
+    runCompare,
     isAnalyzing,
     cancelCurrentAnalysis,
     selectedModels,
@@ -147,6 +150,9 @@ const AnalysisContainer = () => {
           onInstrumentChange={setSelectedInstrument}
           marketAssets={marketAssets}
           analysis={analysis}
+          compareAnalysis={compareAnalysis}
+          isComparing={isComparing}
+          onCompare={runCompare}
         />
 
         {/* Right Column - History, Watchlist, Alerts, Leaderboard */}

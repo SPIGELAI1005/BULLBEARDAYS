@@ -8,6 +8,8 @@ import MultiChartUpload from "@/components/MultiChartUpload";
 import ChatInput from "@/components/ChatInput";
 import AIModelSelector from "@/components/AIModelSelector";
 import ProviderHealthPanel from "@/components/ProviderHealthPanel";
+import CompareProvidersPanel from "@/components/CompareProvidersPanel";
+import ComparisonResults from "@/components/ComparisonResults";
 import AnalyzeButton from "@/components/AnalyzeButton";
 import { useDemoMode } from "@/hooks/useDemoMode";
 import TimeframeSelector from "@/components/TimeframeSelector";
@@ -17,6 +19,9 @@ import { TradingStrategy, UnifiedAnalysis } from "@/lib/types";
 import { MarketDataItem } from "@/lib/api";
 
 interface InputSectionProps {
+  compareAnalysis?: UnifiedAnalysis | null;
+  isComparing?: boolean;
+  onCompare?: (providerKey: string) => Promise<void> | void;
   // Mode state
   isChatMode: boolean;
   isMultiChartMode: boolean;
@@ -85,6 +90,9 @@ const InputSection = ({
   onInstrumentChange,
   marketAssets,
   analysis,
+  compareAnalysis,
+  isComparing,
+  onCompare,
 }: InputSectionProps) => {
   const { enabled: isDemoMode } = useDemoMode();
 
@@ -194,6 +202,14 @@ const InputSection = ({
                 onSetReference={onSetReference}
               />
               <ProviderHealthPanel selectedModels={selectedModels} />
+              {onCompare && (
+                <CompareProvidersPanel
+                  selectedModels={selectedModels}
+                  referenceModel={referenceModel}
+                  isComparing={isComparing}
+                  onCompare={onCompare}
+                />
+              )}
             </div>
 
             {/* Phase 1: First-Class Inputs */}
@@ -225,14 +241,24 @@ const InputSection = ({
             </div>
           </div>
 
-          {/* Analysis Results - side by side on larger screens */}
+          {/* Analysis Results */}
           <div>
-            <AnalysisResults
-              analysis={analysis}
-              isLoading={isAnalyzing}
-              tradingStrategy={tradingStrategy}
-              onStrategyChange={onStrategyChange}
-            />
+            {compareAnalysis ? (
+              <ComparisonResults
+                primary={analysis}
+                compare={compareAnalysis}
+                isLoadingPrimary={isAnalyzing}
+                isLoadingCompare={isComparing}
+                tradingStrategy={tradingStrategy}
+              />
+            ) : (
+              <AnalysisResults
+                analysis={analysis}
+                isLoading={isAnalyzing}
+                tradingStrategy={tradingStrategy}
+                onStrategyChange={onStrategyChange}
+              />
+            )}
           </div>
         </div>
       )}
